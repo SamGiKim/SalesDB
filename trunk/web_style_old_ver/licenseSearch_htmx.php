@@ -1,0 +1,192 @@
+<?php
+require_once "sales_db.php";
+
+mysqli_set_charset($dbconnect, "utf8");
+
+$conditions = array();
+$params = array();
+$types = '';
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $currentDate = new DateTime();
+    $currentFormattedDate = $currentDate->format('Y-m-d');
+
+    // 필터 조건 체크
+    if (isset($_POST['filters'])) {
+      foreach ($_POST['filters'] as $filter) {
+          switch ($filter) {
+              case 'oneMonthExpiry':
+                  $oneMonthLater = $currentDate->modify('+30 days')->format('Y-m-d');
+                  $conditions[] = "D_DATE <= ?";
+                  $params[] = $oneMonthLater;
+                  $types .= 's';
+                  break;
+              case 'expired':
+                  $conditions[] = "D_DATE < ?";
+                  $params[] = $currentFormattedDate;
+                  $types .= 's';
+                  break;
+              // 다른 필터 조건들도 여기에 추가
+          }
+      }
+  }
+  
+    //상세검색
+    $lId = $_POST["lId"];
+    $saleId = $_POST["saleId"];
+    $SN = $_POST["SN"];
+    $type = $_POST["type"];
+    $price = $_POST["price"];
+    $sDate = $_POST["sDate"];
+    $dDate = $_POST["dDate"];
+
+    $sql = "SELECT * FROM LICENSE WHERE ";
+
+    if (!empty($saleId)) {
+        $conditions[] = "SALE_ID = ?";
+        $params[] = $saleId;
+        $types .= 's';
+    }
+    if (!empty($SN)) {
+        $conditions[] = "SN = ?";
+        $params[] = $SN;
+        $types .= 's';
+    }
+    if (!empty($type)) {
+        $conditions[] = "TYPE = ?";
+        $params[] = $type;
+        $types .= 's';
+    }
+    if (!empty($sDate) && !empty($dDate)) {
+      $conditions[] = "S_DATE >= ? AND D_DATE <= ?";
+      $params[] = $sDate;
+      $params[] = $dDate;
+      $types .= 'ss';
+  }
+    if (!empty($conditions)) {
+        $sql .= implode(" AND ", $conditions);
+
+        $stmt = $dbconnect->prepare($sql);
+
+        $stmt->bind_param($types, ...$params);
+
+        if (!$stmt->execute()) {
+          $message = "검색 중 에러가 발생했습니다.";
+          // 이 부분은 그대로 유지
+      } else {
+          $result = $stmt->get_result();
+          $searchResults = array();
+          while ($row = $result->fetch_assoc()) {
+              $searchResults[] = $row;
+          }
+          // 검색 결과가 없는 경우의 리다이렉션을 제거합니다.
+          if (empty($searchResults)) {
+              $message = "일치하는 데이터가 없습니다.";
+          } else {
+              // 검색 결과가 있는 경우에만 리다이렉션합니다.
+              $queryParameters = http_build_query($_POST);
+              header("Location: licenseMain.php?" . $queryParameters);
+              exit();
+          }
+      }
+    } else {
+        $message = "검색할 내용 1개 이상 입력 필수입니다.";
+        header("Location: licenseMain.php?message=" . urlencode($message));
+        exit();
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>라이센스 검색</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="salesMain.css">
+    <script src="https://unpkg.com/htmx.org@1.9.4"></script>
+  </head>
+  <body>
+  <?php include 'navbar.php'; ?>
+      <div class="main">
+        <div class="header-container">
+          <header>라이센스 검색</header>
+        </div>
+        <div class="content">
+          <div class="inputBox mx-auto shadow p-5 mt-4">
+              <div class="btn-cancel position-relative top-0">
+                <button type="button" class="btn-close" aria-label="Close" onclick="redirectToLicenseMain()"></button>
+              </div>
+              <div class="btn-filter-group">
+                <button type="button" class="btn btn-filter" onclick="addFilter('oneMonthExpiry')">한달만기</button>
+                <button type="button" class="btn btn-filter" onclick="addFilter('expired')">만기완료</button>
+                <button type="button" class="btn btn-filter" onclick="addFilter('expiryPeriodA')">종료기간A</button>
+                <button type="button" class="btn btn-filter" onclick="addFilter('expiryPeriodB')">종료기간B</button>
+              </div><br><hr>
+              <div class="title"><상세검색></div>
+              <form id="lcsInsertForm" method="post">
+                  <table class="inputTbl">
+                      <input type="hidden" name="lId" id="lId">
+                  <tr>
+                      <td><label for="saleId">명세서번호</label></td>
+                      <td>
+                        <input type="text" min="0" class="input" name="saleId" id="saleId">
+                        <span class="error-message">&nbsp;</span>
+                    </td>
+                  </tr>
+                  <tr> 
+                      <td><label for="SN">시리얼번호</label></td>
+                      <td>
+                        <input type="text"  class="input" name="SN" id="SN">
+                        <span class="error-message">&nbsp;</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><label for="type">유지보수 유형</label></td>
+                    <td>
+                        <select class="input short selectstyle" name="type" id="type">
+                            <option value="유상" <?php if($html_values['TYPE'] == '유상') echo 'selected'; ?>>유상</option>
+                            <option value="무상" <?php if($html_values['TYPE'] == '무상') echo 'selected'; ?>>무상</option>
+                            <option value="건당" <?php if($html_values['TYPE'] == '건당') echo 'selected'; ?>>건당</option>
+                        </select>
+                        <span class="error-message">&nbsp;</span>
+                    </td>
+                  </tr>
+                  <tr>
+                      <td><label for="price">라이센스 가격</label></td>
+                      <td>
+                        <input type="number"  min="0" class="input short" name="price" id="price"><span>원</span>
+                        <span class="error-message">&nbsp;</span>
+                    </td>
+                  </tr>
+                  <tr>
+                      <td><label for="sDate">유지보수 시작일</label></td>
+                      <td>
+                        <input type="date" class="input short" name="sDate" id="sDate">
+                        <span class="error-message">&nbsp;</span>
+                    </td>
+                  </tr>
+                  <tr>
+                      <td><label for="dDate">유지보수 종료일</label></td>
+                      <td>
+                        <input type="date" class="input short" name="dDate" id="dDate">
+                        <span class="error-message">&nbsp;</span>
+                    </td>
+                  </tr>
+                  </table>
+                  <div class="btn-class">
+                      <button type="submit" class="btn btn-primary insert wide-btn">검색</button>
+                  </div>
+              </form>         
+          </div>
+      </div>  
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+    <script src="salesMain.js"></script>
+    <script src="/.__/auto_complete.js"></script>
+</body>
+</html>

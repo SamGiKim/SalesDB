@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>거래명세서 신규</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="salesMain.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #5a9bd5;">
+        <!-- 반응형 네비 주기 -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <!-- 메뉴 -->
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="#">통합검색</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">거래명세서</a>
+              </li>
+            <li class="nav-item">
+              <a class="nav-link" href="licenseMain.php">라이센스</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">장비</a>
+              </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">지원이력</a>
+            </li>
+          </ul>
+      </nav>
+    <div class="main">
+        <div class="header-container">
+            <header>거래명세서 신규</header>
+        </div>
+        <div class="content">
+            <div class="inputBox mx-auto shadow p-5 mt-4">
+                <div class="btn-cancel position-relative top-0">
+                    <button type="button" class="btn-close" aria-label="Close" onclick="redirectToSalesMain()"></button>
+                </div>
+                <form id="insertorm">
+                    <table class="inputTbl">
+                    <tr>
+                        <td><label for="saleId">판매번호</label></td>
+                        <td><input type="text" class="input" name="saleId" id="saleId" value="<?php echo $html_values['SALE_ID']; ?>"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="userId">납품처</label></td>
+                        <td><input type="number" min="0" class="input" name="vId" id="vId" value="<?php echo $html_values['V_ID']?>"></td>
+                    </tr>
+                    <tr> 
+                        <td><label for="cId">거래처</label></td>
+                        <td><input type="number"  min="0" class="input" name="cId" id="cId" value="<?php echo $html_values['C_ID']?>"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="pbizId">거래처담당자</label></td>
+                        <td><input type="number"  min="0" class="input" name="cbizId" id="cbizId" value="<?php echo $html_values['CBIZ_ID']?>"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="bizId">담당자명</label></td>
+                        <td><input type="number"  min="0" class="input" name="bizId" id="bizId" value="<?php echo $html_values['BIZ_ID']?>"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="totPrice">공급가액합계</label></td>
+                        <td><input type="number"  min="0" class="input short" name="totPrice" id="totPrice" value="<?php echo $html_values['TOT_PRICE']?>"><span>원</span></td>
+                    </tr>
+                    <tr>
+                        <td><label for="dDate">납품일자</label></td>
+                        <td><input type="date" class="input short" name="dDate" id="dDate" value="<?php echo $html_values['D_DATE']?>"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="collDate">수금일자</label></td>
+                        <td><input type="date" class="input short" name="collDate" id="collDate" value="<?php echo $html_values['COLL_DATE']?>"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="SN">SN</label></td>
+                        <td><textarea class="txtarea" name="SN" id="SN" rows="4" cols="52"data-toggle="popover" data-trigger="focus" title="알림" data-content="여러개의 값일 경우 ,(쉼표)로 구분지어 적어주세요." ><?php echo $html_values['SN']?></textarea></td>
+                    </tr>
+                    </table>
+                    <div class="btn-class">
+                        <button type="button" class="btn btn-primary insert">등록</button>
+                    </div>
+                </form>         
+            </div>
+        </div>
+            </div>                   
+        </form>
+    </div>  
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+    <script src="salesMain.js"></script>
+</body>
+</html>

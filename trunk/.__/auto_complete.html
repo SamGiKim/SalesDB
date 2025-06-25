@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Complete</title>
+    <script src="auto_complete.js"></script>
+    <script>
+        window.onload = function() {
+            // TEST
+            var input_el1 = document.querySelector("#auto_complete1");
+            var input_el2 = document.querySelector("#auto_complete2");
+            var input_el3 = document.querySelector("#auto_complete3");
+            new AutoComplete(input_el1, {cmd: "001", type: "V"} );
+            new AutoComplete(input_el2, {cmd: "001", type: "C"} );
+            new AutoComplete(input_el3, {cmd: "001", type: "B"} );
+
+            // PRACTICE
+            var $src_el1 = document.querySelector("#userId");
+            var dst_el1 = $src_el1.cloneNode();
+            // 속성변경
+            dst_el1.id += "_ac";
+            $src_el1.type = "hidden";
+            dst_el1.type = "text";
+            // 추가
+            $src_el1.outerHTML += dst_el1.outerHTML;
+            var $target_el1 = document.querySelector("#userId_ac");
+            new AutoComplete($target_el1, {cmd: "001", type: "V"}, $src_el1);
+        }
+    </script>
+    <link rel="stylesheet" href="../sales.css">
+</head>
+<body>
+    <input id="auto_complete1" type="text" placeholder="납품처"/>
+    <input id="auto_complete2" type="text" placeholder="거래처"/>
+    <input id="auto_complete3" type="text" placeholder="영업"/>
+
+    <div class="contentDetail active-content">
+        <!--검색 컨텐츠-->
+        <h3 class="title">검색</h3>
+        <form id="searchForm" action="search.php" method="post">
+        <table class="inputTbl">
+            <tbody><tr>
+                <td><label for="saleId">판매번호</label></td>
+                <td><input type="text" class="input" name="saleId" id="saleId"></td>
+            </tr>
+            <tr>
+                <td><label for="userId">납품처</label></td>
+                <td><input type="number" min="0" class="input" name="userId" id="userId"></td>
+            </tr>
+            <tr> 
+                <td><label for="ptId">거래처</label></td>
+                <td><input type="number" min="0" class="input" name="ptId" id="ptId"></td>
+            </tr>
+            <tr>
+                <td><label for="pbizId">거래처담당자</label></td>
+                <td><input type="number" min="0" class="input" name="pbizId" id="pbizId"></td>
+            </tr>
+            <tr>
+                <td><label for="bizId">담당자명</label></td>
+                <td><input type="number" min="0" class="input" name="bizId" id="bizId"></td>
+            </tr>
+            <tr>
+                <td><label for="price">금액</label></td>
+                <td><input type="number" min="0" class="input short" name="price" id="price"><span>원</span></td>
+            </tr>
+            <tr>
+                <td><label for="totPrice">공급가액합계</label></td>
+                <td><input type="number" min="0" class="input short" name="totPrice" id="totPrice"><span>원</span></td>
+            </tr>
+            <tr>
+                <td><label for="dDate">납품일자</label></td>
+                <td><input type="date" class="input short" name="dDate" id="dDate"></td>
+            </tr>
+            <tr>
+                <td><label for="collDate">수금일자</label></td>
+                <td><input type="date" class="input short" name="collDate" id="collDate"></td>
+            </tr>
+            <tr>
+                <td><label for="quant">수량</label></td>
+                <td><input type="number" min="0" class="input short" name="quant" id="quant"><span>개</span></td>
+            </tr>
+            <tr>
+                <td><label for="mPrice">월금액</label></td>
+                <td><input type="number" min="0" class="input short" name="mPrice" id="mPrice"><span>원</span></td>
+            </tr>
+            <tr>
+                <td><label for="mvatPrice">월금액(VAT포함)</label></td>
+                <td><input type="number" min="0" class="input short" name="mvatPrice" id="mvatPrice"><span>원</span></td>
+            </tr>
+            <tr>
+                <td><label for="totPrice2">총금액</label></td>
+                <td><input type="number" min="0" class="input short" name="totPrice2" id="totPrice2"><span>원</span></td>
+            </tr>
+            </tbody></table>
+            <div class="btn-wrap">
+                <button class="button search">검색</button>
+            </div>                   
+        </form>
+    </div>
+</body>
+</html>

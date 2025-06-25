@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>라이센스 신규 입력</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="salesMain.css">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #5a9bd5;">
+      <!-- 반응형 네비 주기 -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <!--네비바 메뉴 -->
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="#">통합검색</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="salesMain.php">거래명세서</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="licenseMain.php">라이센스</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="deviceMain.php">장비</a>
+              </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">지원이력</a>
+            </li>
+          </ul>
+      </nav>
+      <div class="main">
+        <div class="header-container">
+          <header>라이센스 신규입력</header>
+        </div>
+        <div class="content">
+          <div class="inputBox mx-auto shadow p-5 mt-4">
+              <div class="btn-cancel position-relative top-0">
+                  <button type="button" class="btn-close" aria-label="Close" onclick="redirectTolicenceMain()"></button>
+              </div>
+              <form id="lcsInsertForm" method="post">
+                  <table class="inputTbl">
+                      <input type="hidden" name="lId" id="lId" value="<?php echo $html_values['L_ID']; ?>">
+                  <tr>
+                      <td><label for="saleId">명세서번호</label></td>
+                      <td><input type="text" min="0" class="input" name="saleId" id="saleId" value="<?php echo $html_values['SALE_ID']?>"></td>
+                  </tr>
+                  <tr> 
+                      <td><label for="SN">시리얼번호</label></td>
+                      <td><input type="text"  class="input" name="SN" id="SN" value="<?php echo $html_values['SN']?>"></td>
+                  </tr>
+                  <tr>
+                    <td><label for="type">유지보수 유형</label></td>
+                    <td>
+                        <select class="input short selectstyle" name="type" id="type">
+                            <option value="유상" <?php if($html_values['TYPE'] == '유상') echo 'selected'; ?>>유상</option>
+                            <option value="무상" <?php if($html_values['TYPE'] == '무상') echo 'selected'; ?>>무상</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                      <td><label for="price">라이센스 가격</label></td>
+                      <td><input type="number"  min="0" class="input short" name="price" id="price" value="<?php echo $html_values['PRICE']?>"><span>원</span></td>
+                  </tr>
+                  <tr>
+                      <td><label for="sDate">유지보수 시작일</label></td>
+                      <td><input type="date" class="input short" name="sDate" id="sDate" value="<?php echo $html_values['S_DATE']?>"></td>
+                  </tr>
+                  <tr>
+                      <td><label for="dDate">유지보수 종료일</label></td>
+                      <td><input type="date" class="input short" name="dDate" id="dDate" value="<?php echo $html_values['D_DATE']?>"></td>
+                  </tr>
+                  </table>
+                  <div class="btn-class">
+                      <button type="submit" class="btn btn-primary insert">등록</button>
+                  </div>
+              </form>         
+          </div>
+      </div>  
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+    <script src="salesMain.js"></script>
+</body>
+</html>
