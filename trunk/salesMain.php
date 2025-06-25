@@ -52,34 +52,6 @@ $receivedSN = null; // 또는 적절한 값
 $receivedSaleID = null; // 또는 적절한 값
 $receivedOrderNo = null; // 또는 적절한 값
 
-// ------------------------------Pagination------------------------------
-
-// // 페이지네이션 관련 변수 설정
-// $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;  // 현재 페이지 번호
-// $limit = 50;  // 한 페이지에 보여줄 데이터 수
-// $offset = max(0, ($page - 1) * $limit); // OFFSET 값 계산
-
-// // 데이터베이스에서 해당 페이지에 맞는 데이터를 가져오는 쿼리
-// $query = "SELECT * FROM SALES LIMIT ?, ?";
-// $stmt = $dbconnect->prepare($query);
-// $stmt->bind_param("ii", $offset, $limit);
-// $stmt->execute();
-// $result = $stmt->get_result();
-
-// // 총 데이터 수를 구하는 쿼리
-// $countQuery = "SELECT COUNT(*) FROM SALES";
-// $countResult = $dbconnect->query($countQuery);
-// if (!$countResult) {
-//     die("Error in COUNT query: " . $dbconnect->error);
-// }
-// $totalCount = $countResult->fetch_row()[0];
-
-// // 전체 페이지 수 계산
-// $totalPage = ceil($totalCount / $limit);
-
-// ------------------------------Pagination------------------------------
-
-
 // selectSales 함수를 사용하여 필요한 조건을 적용한 SQL 쿼리를 생성
 $sql = selectSales($sortBy, $receivedSN, $receivedSaleID, $receivedOrderNo);
 
@@ -384,6 +356,54 @@ if (isset($_GET['condition']) && $_GET['condition'] == 'eos') {
     $totalCount = mysqli_num_rows($result); // 결과의 총 건수 업데이트
 }
 
+// ------------------------------Pagination------------------------------
+// 한 페이지에 보여줄 아이템 수
+$itemsPerPage = 50;
+
+// 현재 페이지 번호 (GET 파라미터로 받음, 기본 1)
+$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+
+// 전체 페이지 수 계산
+$totalPages = ceil($totalCount / $itemsPerPage);
+
+// LIMIT, OFFSET 계산
+$offset = ($page - 1) * $itemsPerPage;
+
+// 데이터 조회 쿼리
+$query = "SELECT S.SALE_ID,
+                 V.NAME AS V_NAME,
+                 C.NAME AS C_NAME,
+                 CBIZ.NAME AS CBIZ_NAME,
+                 B.NAME AS BIZ_NAME, 
+                 S.TOT_PRICE AS TOT_PRICE, 
+                 S.DELIVER_DATE AS DELIVER_DATE,
+                 S.S_DATE AS S_DATE, 
+                 S.D_DATE AS D_DATE, 
+                 S.WARRANTY AS WARRANTY,
+                 S.ORDER_NO AS ORDER_NO, 
+                 S.REF AS REF, 
+                 GROUP_CONCAT(D.SN) AS SN_LIST 
+          FROM SALES AS S
+          LEFT JOIN VENDOR AS V ON S.V_ID = V.V_ID
+          LEFT JOIN CUSTOMER AS C ON S.C_ID = C.C_ID
+          LEFT JOIN CUSTOMER AS CBIZ ON S.CBIZ_ID = CBIZ.C_ID
+          LEFT JOIN BUSINESS AS B ON S.BIZ_ID = B.BIZ_ID
+          LEFT JOIN DEVICE AS D ON S.ORDER_NO = D.ORDER_NO
+          GROUP BY S.SALE_ID";
+
+// 문자열을 날짜처럼 변환해서 비교
+$query .= " ORDER BY 
+  STR_TO_DATE(SUBSTRING_INDEX(S.SALE_ID, '-', 1), '%y/%m/%d') DESC,
+  CAST(SUBSTRING_INDEX(S.SALE_ID, '-', -1) AS UNSIGNED) DESC
+  LIMIT $itemsPerPage OFFSET $offset";
+
+$result = mysqli_query($dbconnect, $query);
+if (!$result) {
+    die("Query Failed: " . mysqli_error($dbconnect));
+}
+// ------------------------------Pagination------------------------------
+
 ?>
 
 <!DOCTYPE html>
@@ -590,27 +610,22 @@ if (isset($_GET['condition']) && $_GET['condition'] == 'eos') {
                             ?>
                         </tbody>
                     </table>
+                    <div class="pagination-container text-center mt-3 mb-4">
+                        <?php
+                        if ($page > 1) {
+                            $prevPage = $page - 1;
+                            echo "<a href='?page=$prevPage' class='btn btn-outline-primary me-2'>이전</a>";
+                        }
+
+                        echo " $page / $totalPages";
+
+                        if ($page < $totalPages) {
+                            $nextPage = $page + 1;
+                            echo "<a href='?page=$nextPage' class='btn btn-outline-primary ms-2'>다음</a>";
+                        }
+                        ?>
+                    </div>
                 </div>
-                <!-- <div class="pagination"> -->
-                    <!-- <ul class="pagination-list"> -->
-                        <!-- 이전 버튼 -->
-                        <!-- <li class="page-item prev">
-                            <a href="?page=<?php echo ($page > 1) ? $page - 1 : 1; ?>">« 이전</a>
-                        </li> -->
-
-                        <!-- 페이지 버튼 -->
-                        <!-- <?php for ($i = 1; $i < $totalPage; $i++) : ?>
-                            <li class="page-item" data-page="<?= $i ?>">
-                                <a href="javascript:void(0);" onclick="goToPage(<?= $i ?>)"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?> -->
-
-                        <!-- 다음 버튼 -->
-                        <!-- <li class="page-item next">
-                            <a href="?page=<?php echo ($page < $totalPage) ? $page + 1 : $totalPage; ?>">다음 »</a>
-                        </li>
-                    </ul> -->
-                <!-- </div> -->
             </div>
         </div>
         <script src="salesMain.js"></script>

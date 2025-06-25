@@ -48,8 +48,8 @@ function licenseExists($dbconnect, $saleId, $SN) {
 
 // INSERT
 function insertLicense($dbconnect, $data) {
-    $stmt = $dbconnect->prepare("INSERT INTO LICENSE (SALE_ID, SN, `TYPE`, PRICE, WARRANTY, S_DATE, D_DATE, INSPECTION, SUPPORT, REF) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssiisssss", $data['saleId'], $data['SN'], $data['type'], $data['price'], $data['warranty'], $data['sDate'], $data['dDate'], $data['inspection'], $data['support'], $data['ref']);
+    $stmt = $dbconnect->prepare("INSERT INTO LICENSE (SALE_ID, SN, `TYPE`, MANAGER, PRICE, WARRANTY, S_DATE, D_DATE, INSPECTION, SUPPORT, REF) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssiisssss", $data['saleId'], $data['SN'], $data['type'], $data['manager'], $data['price'], $data['warranty'], $data['sDate'], $data['dDate'], $data['inspection'], $data['support'], $data['ref']);
     $success = $stmt->execute();
     $stmt->close();
     return $success;
@@ -76,6 +76,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         'saleId' => isset($_POST["saleId"]) ? $_POST["saleId"] : '',
         'SN' => isset($_POST["SN"]) ? $_POST["SN"] : '',
         'type' => $_POST["type"] ? $_POST["type"] : '',
+        'manager' => $_POST["manager"] ? $_POST["manager"] : '',
         'price' => isset($_POST["price"]) && $_POST["price"] !== "" ? $_POST["price"] : null,
         'sDate' => $_POST["sDate"] !== "" ? $_POST["sDate"] : null,
         'dDate' => $_POST["dDate"] !== "" ? $_POST["dDate"] : null,
@@ -173,6 +174,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 <option value="유상" <?php echo isset($html_values['TYPE']) && $html_values['TYPE'] == '유상' ? 'selected' : ''; ?>>유상</option>
                                 <option value="무상" <?php echo isset($html_values['TYPE']) && $html_values['TYPE'] == '무상' ? 'selected' : ''; ?>>무상</option>
                                 <option value="건당" <?php echo isset($html_values['TYPE']) && $html_values['TYPE'] == '건당' ? 'selected' : ''; ?>>건당</option>
+                            </select>
+                            <span class="error-message" id="error-type"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="manager">담당 엔지니어</label></td>
+                        <td>
+                            <select class="input short selectstyle" name="manager" id="manager">
+                                <option value="하진구" <?php echo isset($html_values['MANAGER']) && $html_values['MANAGER'] == '하진구' ? 'selected' : ''; ?>>하진구</option>
+                                <option value="이재길" <?php echo isset($html_values['MANAGER']) && $html_values['MANAGER'] == '이재길' ? 'selected' : ''; ?>>이재길</option>
+                                <option value="김두호" <?php echo isset($html_values['MANAGER']) && $html_values['MANAGER'] == '김두호' ? 'selected' : ''; ?>>김두호</option>
+                                <option value="이시호" <?php echo isset($html_values['MANAGER']) && $html_values['MANAGER'] == '이시호' ? 'selected' : ''; ?>>이시호</option>
                             </select>
                             <span class="error-message" id="error-type"></span>
                         </td>

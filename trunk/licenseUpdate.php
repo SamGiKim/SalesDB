@@ -27,11 +27,11 @@ function fetchLicense($dbconnect, $saleId, $SN)
     $stmt->close();
     return $data;
 }
-function updateLicense($dbconnect, $type, $price, $sDate, $dDate, $ref, $warranty, $inspection, $support, $saleId, $SN)
+function updateLicense($dbconnect, $type, $manager, $price, $sDate, $dDate, $ref, $warranty, $inspection, $support, $saleId, $SN)
 {
-    $query = "UPDATE LICENSE SET `TYPE`=?, PRICE=?, S_DATE=?, D_DATE=?, REF=?, WARRANTY=?, INSPECTION=?, SUPPORT=? WHERE SALE_ID=? AND SN=?";
+    $query = "UPDATE LICENSE SET `TYPE`=?, `MANAGER`, PRICE=?, S_DATE=?, D_DATE=?, REF=?, WARRANTY=?, INSPECTION=?, SUPPORT=? WHERE SALE_ID=? AND SN=?";
     $stmt = $dbconnect->prepare($query);
-    $stmt->bind_param("sisssissss", $type, $price, $sDate, $dDate, $ref, $warranty, $inspection, $support, $saleId, $SN);
+    $stmt->bind_param("ssisssissss", $type, $manager, $price, $sDate, $dDate, $ref, $warranty, $inspection, $support, $saleId, $SN);
     $stmt->execute();
     $affected = $stmt->affected_rows;
     $stmt->close();
@@ -57,6 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $saleId = $_POST['saleId'] ?? '';
     $SN = $_POST['SN'] ?? '';
     $type = $_POST['type'] ?? '';
+    $manager = $_POST['manager'] ?? '';
     $price = $_POST['price'] ?? '';
     $sDate = trim($_POST['sDate']) !== '' ? $_POST['sDate'] : $existingLicense['S_DATE'];
     $dDate = trim($_POST['dDate']) !== '' ? $_POST['dDate'] : $existingLicense['D_DATE'];
@@ -78,7 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     $dDate = calculateDDate($sDate, $warranty);
-    $affected = updateLicense($dbconnect, $type, $price, $sDate, $dDate, $ref, $warranty, $inspection, $support,  $saleId, $SN);
+    $affected = updateLicense($dbconnect, $type, $manager, $price, $sDate, $dDate, $ref, $warranty, $inspection, $support,  $saleId, $SN);
 
     if ($affected >= 0) {
         echo "<script>alert('업데이트 성공!'); window.location.href='licenseMain.php';</script>";
@@ -149,6 +150,17 @@ if ($html_values) {
                                     <option value="유상" <?php echo isset($html_values['TYPE']) && $html_values['TYPE'] == '유상' ? 'selected' : ''; ?>>유상</option>
                                     <option value="무상" <?php echo isset($html_values['TYPE']) && $html_values['TYPE'] == '무상' ? 'selected' : ''; ?>>무상</option>
                                     <option value="건당" <?php echo isset($html_values['TYPE']) && $html_values['TYPE'] == '건당' ? 'selected' : ''; ?>>건당</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><label for="manager">담당 엔지니어</label></td>
+                            <td>
+                                <select class="input short selectstyle" name="manager" id="manager">
+                                    <option value="하진구" <?php echo isset($html_values['MANAGER']) && $html_values['MANAGER'] == '하진구' ? 'selected' : ''; ?>>하진구</option>
+                                    <option value="이재길" <?php echo isset($html_values['MANAGER']) && $html_values['MANAGER'] == '이재길' ? 'selected' : ''; ?>>이재길</option>
+                                    <option value="김두호" <?php echo isset($html_values['MANAGER']) && $html_values['MANAGER'] == '김두호' ? 'selected' : ''; ?>>김두호</option>
+                                    <option value="이시호" <?php echo isset($html_values['MANAGER']) && $html_values['MANAGER'] == '이시호' ? 'selected' : ''; ?>>이시호</option>
                                 </select>
                             </td>
                         </tr>

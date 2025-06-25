@@ -1,6 +1,4 @@
 <?php
-// echo "deviceMain.php 출력";
-// deviceMain.php
 require_once "auth.php";
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -11,24 +9,19 @@ require 'deviceLFSF.php';
 mysqli_set_charset($dbconnect, "utf8");
 
 $SN = isset($_GET['SN']) ? $_GET['SN'] : '';
-// error_log("SN 값: " . $SN); // 이를 통해 error.log 파일에서 SN의 값을 확인할 수 있습니다.
-
 $message = "전체 : ";
+// 한 페이지에 보여줄 아이템 수
+$itemsPerPage = 50;
 
-// 총 건수 구하기
-$totalLicenseQuery = "SELECT COUNT(*) as total FROM DEVICE";
-$totalDeviceResult = mysqli_query($dbconnect, $totalLicenseQuery);
-
-if ($totalDeviceResult && $totalDeviceResult->num_rows > 0) {
-    $totalDeviceRow = $totalDeviceResult->fetch_assoc();
-} else {
-    echo "0 results";
-}
+// 현재 페이지 번호 (GET 파라미터로 받음, 기본 1)
+$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
 
 // URL 매개변수로부터 검색 조건 가져오기
 $searchConditions = [];
 if (!empty($_GET)) {
     foreach ($_GET as $key => $value) {
+        if ($key === 'page') continue; // 페이지 번호는 검색 조건에서 제외
         if (!empty(trim($value))) {
             $searchConditions[$key] = $value;
         }
@@ -36,45 +29,63 @@ if (!empty($_GET)) {
 }
 
 $columnMap = [
-    "devType" => "DEV_TYPE", 
+    "devType" => "DEV_TYPE",
+    // 필요하다면 여기에 추가 매핑
 ];
 
-// SN 값이 비어있는 경우에만 라이센스 정보 쿼리를 실행
-if (empty($searchConditions)) {
-    // 모든 장비를 조회하는 쿼리 실행
-    $query = "SELECT D.*, S.SALE_ID FROM DEVICE D
-              LEFT JOIN SALES S ON D.ORDER_NO = S.ORDER_NO
-              ORDER BY D.WDATE DESC";
-} else {
-    // 검색 조건에 따라 SQL 쿼리 작성
-    $query = "SELECT D.*, S.SALE_ID FROM DEVICE D
-              LEFT JOIN SALES S ON D.ORDER_NO = S.ORDER_NO
-              WHERE ";
-              
-    $conditions = [];
-    foreach ($searchConditions as $key => $value) {
-        if (!isset($columnMap[$key])) {
-            continue;
-        }
-        $column = $columnMap[$key];
-        if ($key === "SN" || $key === "FV") {
-            $conditions[] = "D.$column LIKE '%$value%'";
-        } else {
-            $conditions[] = "D.$column = '$value'";
-        }
+// WHERE 조건 배열 생성
+$conditions = [];
+foreach ($searchConditions as $key => $value) {
+    if (!isset($columnMap[$key])) {
+        continue;
     }
-    $query .= implode(" AND ", $conditions);
+    $column = $columnMap[$key];
+    if ($key === "SN" || $key === "FV") {
+        $conditions[] = "D.$column LIKE '%" . mysqli_real_escape_string($dbconnect, $value) . "%'";
+    } else {
+        $conditions[] = "D.$column = '" . mysqli_real_escape_string($dbconnect, $value) . "'";
+    }
 }
 
+// 총 데이터 건수 구하기 쿼리 (조건 반영)
+$countQuery = "SELECT COUNT(*) AS total FROM DEVICE D
+               LEFT JOIN SALES S ON D.ORDER_NO = S.ORDER_NO";
+
+if (count($conditions) > 0) {
+    $countQuery .= " WHERE " . implode(" AND ", $conditions);
+}
+
+$countResult = mysqli_query($dbconnect, $countQuery);
+if ($countResult) {
+    $countRow = $countResult->fetch_assoc();
+    $totalCount = $countRow['total'];
+} else {
+    $totalCount = 0;
+}
+
+// 전체 페이지 수 계산
+$totalPages = ceil($totalCount / $itemsPerPage);
+
+// LIMIT, OFFSET 계산
+$offset = ($page - 1) * $itemsPerPage;
+
+// 데이터 조회 쿼리
+$query = "SELECT D.*, S.SALE_ID FROM DEVICE D
+          LEFT JOIN SALES S ON D.ORDER_NO = S.ORDER_NO";
+
+if (count($conditions) > 0) {
+    $query .= " WHERE " . implode(" AND ", $conditions);
+}
+
+$query .= " ORDER BY D.WDATE DESC
+            LIMIT $itemsPerPage OFFSET $offset";
 
 $result = mysqli_query($dbconnect, $query);
 if (!$result) {
     die("Query Failed: " . mysqli_error($dbconnect));
 }
-// 결과의 총 건수 업데이트
-$totalCount = mysqli_num_rows($result);
-
 ?>
+
 
 
 <!DOCTYPE html>
@@ -190,6 +201,21 @@ $totalCount = mysqli_num_rows($result);
                             <?php } ?>
                         </tbody>
                     </table>
+                    <div class="pagination-container text-center mt-3 mb-4">
+                        <?php
+                        if ($page > 1) {
+                            $prevPage = $page - 1;
+                            echo "<a href='?page=$prevPage' class='btn btn-outline-primary me-2'>이전</a>";
+                        }
+
+                        echo " $page / $totalPages";
+
+                        if ($page < $totalPages) {
+                            $nextPage = $page + 1;
+                            echo "<a href='?page=$nextPage' class='btn btn-outline-primary ms-2'>다음</a>";
+                        }
+                        ?>
+                    </div>
                     <?php
                     if (!empty($SN)) { // SN 값이 비어있지 않은 경우에만 전체 블럭을 출력
                     ?>

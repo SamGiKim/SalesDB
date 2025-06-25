@@ -6,12 +6,17 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 require_once "sales_db.php";
+require_once "pagination.php";
 
 // UTF-8 인코딩 설정
 mysqli_set_charset($dbconnect, "utf8");
 
 $today = date("Y-m-d");
 $message = "전체 : ";
+
+$itemsPerPage = 50;
+$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
 
 // 동적 조건을 생성하는 함수
 function addDynamicConditions($dbconnect, $params)
@@ -26,7 +31,7 @@ function addDynamicConditions($dbconnect, $params)
 }
 
 // 기본 쿼리 
-$query = "SELECT L.SALE_ID, L.SN, L.TYPE, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, L.INSPECTION, L.SUPPORT, L.REF, V.NAME AS VENDOR_NAME
+$query = "SELECT L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, L.INSPECTION, L.SUPPORT, L.REF, V.NAME AS VENDOR_NAME
           FROM LICENSE AS L
           JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
           JOIN VENDOR AS V ON S.V_ID = V.V_ID"; //쿼리 잘 작동됨
@@ -62,7 +67,7 @@ function get_sql_queried_from_dashboard($cmd)
 {
     global $dbconnect, $today;
     
-    $baseSelect = "SELECT L.SALE_ID, L.SN, L.TYPE, L.PRICE, L.S_DATE, L.D_DATE, L.REF, L.WARRANTY, 
+    $baseSelect = "SELECT L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.REF, L.WARRANTY, 
                    L.INSPECTION, L.SUPPORT, V.NAME AS VENDOR_NAME
                    FROM LICENSE AS L
                    JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
@@ -105,6 +110,7 @@ $fieldToDbColumnMapping = [
     'saleId'    => 'L.SALE_ID',
     'SN'        => 'L.SN',
     'type'      => 'L.TYPE',
+    'manager'   => 'L.MANAGER',
     'sDateFrom' => 'L.S_DATE',
     'sDateTo'   => 'L.S_DATE',
     'dDateFrom' => 'L.D_DATE',
@@ -200,7 +206,7 @@ switch ($from_url_path) {
             
             if (isset($_GET['SN'])) {
                 $sn = mysqli_real_escape_string($dbconnect, $_GET['SN']);
-                $query = "SELECT L.SALE_ID, L.SN, L.TYPE, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, 
+                $query = "SELECT L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, 
                                  L.INSPECTION, L.SUPPORT, L.REF, V.NAME AS VENDOR_NAME
                           FROM LICENSE AS L
                           JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
@@ -236,7 +242,7 @@ switch ($from_url_path) {
         // echo "Conditions: " . (!empty($conditions) ? implode(", ", $conditions) : "None") . "<br>";
         
         $query = "SELECT 
-            L.SALE_ID, L.SN, L.TYPE, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, L.INSPECTION, L.SUPPORT, L.REF, V.NAME AS VENDOR_NAME
+            L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, L.INSPECTION, L.SUPPORT, L.REF, V.NAME AS VENDOR_NAME
             FROM LICENSE AS L
             JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
             JOIN VENDOR AS V ON S.V_ID = V.V_ID";
@@ -309,10 +315,35 @@ if ($sale_ids) {
     }
 }
 
-
 // 결과 재설정 (원래대로 돌아가서 다시 사용 가능하게 함)
 mysqli_data_seek($result, 0);
 
+// 전체 페이지 수 계산
+$totalPages = ceil($totalCount / $itemsPerPage);
+
+// LIMIT, OFFSET 계산
+$offset = ($page - 1) * $itemsPerPage;
+
+// 데이터 조회 쿼리
+$query = "SELECT L.*, S.SALE_ID, V.NAME AS VENDOR_NAME
+          FROM LICENSE L
+          JOIN SALES S ON L.SALE_ID = S.SALE_ID
+          JOIN VENDOR V ON S.V_ID = V.V_ID";
+
+if (count($conditions) > 0) {
+    $query .= " WHERE " . implode(" AND ", $conditions);
+}
+
+// 문자열을 날짜처럼 변환해서 비교
+$query .= " ORDER BY 
+  STR_TO_DATE(SUBSTRING_INDEX(L.SALE_ID, '-', 1), '%y/%m/%d') DESC,
+  CAST(SUBSTRING_INDEX(L.SALE_ID, '-', -1) AS UNSIGNED) DESC
+  LIMIT $itemsPerPage OFFSET $offset";
+
+$result = mysqli_query($dbconnect, $query);
+if (!$result) {
+    die("Query Failed: " . mysqli_error($dbconnect));
+}
 ?>
 
 <!DOCTYPE html>
@@ -384,6 +415,7 @@ mysqli_data_seek($result, 0);
                                 <th scope="col" class="col-2">SN</th>
                                 <th scope="col" class="col-1">납품처</th>
                                 <th scope="col" class="col-1 maintenance-type">유형</th>
+                                <th scope="col" class="col-1">담당 엔지니어</th>
                                 <th scope="col" class="col-1" style="text-align:right; padding-right:2%;">가격</th>
                                 <th scope="col" class="col-1">보증기간</th>
                                 <th scope="col" class="col-1">시작일</th>
@@ -430,6 +462,7 @@ mysqli_data_seek($result, 0);
                                         ?>
                                     </td>
                                     <td class="col-1"><?php echo $row['TYPE']; ?></td>
+                                    <td class="col-1"><?php echo $row['MANAGER']?></td>
                                     <td class="col-1" style="text-align:right; padding-right:2%;"><?php echo number_format($row['PRICE'] ?? 0); ?><span>원</span></td>
                                     <td class="col-1">
                                         <?php
@@ -472,6 +505,10 @@ mysqli_data_seek($result, 0);
                                                         <tr>
                                                             <th style="margin-left:10px; font-weight: bold;">유형 :</th>
                                                             <td><?php echo !empty($details['TYPE']) ? $details['TYPE'] : '-'; ?></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th style="margin-left:10px; font-weight: bold;">담당 엔지니어 :</th>
+                                                            <td><?php echo !empty($details['MANAGER']) ? $details['MANAGER'] : '-'; ?></td>
                                                         </tr>
                                                         <tr>
                                                             <th style="margin-left:10px; font-weight: bold;">가격 :</th>
@@ -518,6 +555,21 @@ mysqli_data_seek($result, 0);
                             ?>
                         </tbody>
                     </table>
+                    <div class="pagination-container text-center mt-3 mb-4">
+                        <?php
+                        if ($page > 1) {
+                            $prevPage = $page - 1;
+                            echo "<a href='?page=$prevPage' class='btn btn-outline-primary me-2'>이전</a>";
+                        }
+
+                        echo " $page / $totalPages";
+
+                        if ($page < $totalPages) {
+                            $nextPage = $page + 1;
+                            echo "<a href='?page=$nextPage' class='btn btn-outline-primary ms-2'>다음</a>";
+                        }
+                        ?>
+                    </div>
                 </div>
             </div>
         </div>
