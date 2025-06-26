@@ -48,7 +48,7 @@ function licenseExists($dbconnect, $saleId, $SN) {
 
 // INSERT
 function insertLicense($dbconnect, $data) {
-    $stmt = $dbconnect->prepare("INSERT INTO LICENSE (SALE_ID, SN, `TYPE`, MANAGER, PRICE, WARRANTY, S_DATE, D_DATE, INSPECTION, SUPPORT, REF) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $dbconnect->prepare("INSERT INTO LICENSE (SALE_ID, SN, `TYPE`, MANAGER, PRICE, WARRANTY, S_DATE, D_DATE, INSPECTION, SUPPORT, REF) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssssiisssss", $data['saleId'], $data['SN'], $data['type'], $data['manager'], $data['price'], $data['warranty'], $data['sDate'], $data['dDate'], $data['inspection'], $data['support'], $data['ref']);
     $success = $stmt->execute();
     $stmt->close();
