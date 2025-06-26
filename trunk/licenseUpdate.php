@@ -29,7 +29,7 @@ function fetchLicense($dbconnect, $saleId, $SN)
 }
 function updateLicense($dbconnect, $type, $manager, $price, $sDate, $dDate, $ref, $warranty, $inspection, $support, $saleId, $SN)
 {
-    $query = "UPDATE LICENSE SET `TYPE`=?, `MANAGER`, PRICE=?, S_DATE=?, D_DATE=?, REF=?, WARRANTY=?, INSPECTION=?, SUPPORT=? WHERE SALE_ID=? AND SN=?";
+    $query = "UPDATE LICENSE SET `TYPE`=?, MANAGER=?, PRICE=?, S_DATE=?, D_DATE=?, REF=?, WARRANTY=?, INSPECTION=?, SUPPORT=? WHERE SALE_ID=? AND SN=?";
     $stmt = $dbconnect->prepare($query);
     $stmt->bind_param("ssisssissss", $type, $manager, $price, $sDate, $dDate, $ref, $warranty, $inspection, $support, $saleId, $SN);
     $stmt->execute();
