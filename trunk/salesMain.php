@@ -358,7 +358,7 @@ if (isset($_GET['condition']) && $_GET['condition'] == 'eos') {
 
 // ------------------------------Pagination------------------------------
 // 한 페이지에 보여줄 아이템 수
-$itemsPerPage = 50;
+$itemsPerPage = 100;
 
 // 현재 페이지 번호 (GET 파라미터로 받음, 기본 1)
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
