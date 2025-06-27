@@ -45,6 +45,9 @@ $user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
       <li class="nav-item">
         <a class="nav-link <?= strpos($current_page, 'support') !== false ? 'active' : '' ?>" href="#">지원이력</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link <?= strpos($current_page, 'passcode') !== false ? 'active' : '' ?>" href="passcodeMain.html">패스코드</a>
+      </li>
     </ul>
     <ul class="navbar-nav ms-auto">
       <li class="nav-item">
