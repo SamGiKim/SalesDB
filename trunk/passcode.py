@@ -2,7 +2,8 @@ import time
 import hmac
 import hashlib
 
-SECONDS_IN_5_MINS = 60 * 5
+PASSCODE_PERIOD_MINUTES = 30
+SECONDS_PER_PERIOD = 60 * PASSCODE_PERIOD_MINUTES
 
 key_part1 = bytes([0x74, 0x61, 0x73, 0x6B])
 key_part2 = bytes([0x71, 0x6F, 0x73])
@@ -19,7 +20,7 @@ def assemble_key():
 
 def main():
     now = int(time.time())
-    period = now // SECONDS_IN_5_MINS
+    period = now // SECONDS_PER_PERIOD
     secret_key = assemble_key()
     code = generate_passcode(period, secret_key)
 

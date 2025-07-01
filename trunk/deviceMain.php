@@ -30,7 +30,7 @@ if (!empty($_GET)) {
 
 $columnMap = [
     "devType" => "DEV_TYPE",
-    // 필요하다면 여기에 추가 매핑
+    "SN" => "SN",
 ];
 
 // WHERE 조건 배열 생성
@@ -40,12 +40,16 @@ foreach ($searchConditions as $key => $value) {
         continue;
     }
     $column = $columnMap[$key];
-    if ($key === "SN" || $key === "FV") {
+    if ($key === "SN") {
+        // 정확히 일치하는 SN만 조회
+        $conditions[] = "D.$column = '" . mysqli_real_escape_string($dbconnect, $value) . "'";
+    } elseif ($key === "FV") {
         $conditions[] = "D.$column LIKE '%" . mysqli_real_escape_string($dbconnect, $value) . "%'";
     } else {
         $conditions[] = "D.$column = '" . mysqli_real_escape_string($dbconnect, $value) . "'";
     }
 }
+
 
 // 총 데이터 건수 구하기 쿼리 (조건 반영)
 $countQuery = "SELECT COUNT(*) AS total FROM DEVICE D

@@ -15,7 +15,8 @@ $today = date("Y-m-d");
 $message = "전체 : ";
 
 $itemsPerPage = 50;
-$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = isset($_GET['page']) && is_numeric($_GET['page']) ? intval($_GET['page']) : 1;
+$cmd = isset($_GET['cmd']) ? $_GET['cmd'] : '';
 if ($page < 1) $page = 1;
 
 // 동적 조건을 생성하는 함수
@@ -63,10 +64,46 @@ if ($dbconnect->connect_error) {
     die("Connection failed: " . $dbconnect->connect_error);
 }
 
-function get_sql_queried_from_dashboard($cmd)
+function get_count_from_dashboard($cmd) {
+    global $dbconnect;
+
+    $baseCount = "SELECT COUNT(*) AS cnt
+                  FROM LICENSE AS L
+                  JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
+                  JOIN VENDOR AS V ON S.V_ID = V.V_ID";
+
+    $d_date_tobe_expired = date("Y-m-d", strtotime("+30 days"));
+
+    switch ($cmd) {
+        case "001":
+            $where = "L.TYPE = '유상' AND L.D_DATE BETWEEN CURDATE() AND '$d_date_tobe_expired'";
+            break;
+        case "002":
+            $where = "L.TYPE = '무상' AND L.D_DATE BETWEEN CURDATE() AND '$d_date_tobe_expired'";
+            break;
+        case "003":
+            $where = "L.TYPE = '유상' AND L.D_DATE <= CURDATE()";
+            break;
+        case "004":
+            $where = "L.TYPE = '무상' AND L.D_DATE <= CURDATE()";
+            break;
+        default:
+            $where = "1"; // 조건없음 전체
+            break;
+    }
+
+    $countQuery = "$baseCount WHERE $where";
+    $res = mysqli_query($dbconnect, $countQuery);
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        return intval($row['cnt']);
+    } else {
+        return 0;
+    }
+}
+
+function get_sql_queried_from_dashboard($cmd, $limit = null, $offset = null)
 {
-    global $dbconnect, $today;
-    
     $baseSelect = "SELECT L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.REF, L.WARRANTY, 
                    L.INSPECTION, L.SUPPORT, V.NAME AS VENDOR_NAME
                    FROM LICENSE AS L
@@ -74,34 +111,41 @@ function get_sql_queried_from_dashboard($cmd)
                    JOIN VENDOR AS V ON S.V_ID = V.V_ID";
 
     $d_date_tobe_expired = date("Y-m-d", strtotime("+30 days"));
-    
+
     switch ($cmd) {
-        case "001": // 유상 보증기간 종료 예정
+        case "001":
             $message = "유상 보증기간 종료 예정(D-30) : ";
-            $sql = $baseSelect . " WHERE L.TYPE = '유상' AND L.D_DATE BETWEEN CURDATE() AND '$d_date_tobe_expired' ORDER BY L.D_DATE ASC";
+            $where = "L.TYPE = '유상' AND L.D_DATE BETWEEN CURDATE() AND '$d_date_tobe_expired'";
+            $order = "ORDER BY L.D_DATE ASC";
             break;
-            
-        case "002": // 무상 보증기간 종료 예정
+        case "002":
             $message = "무상 보증기간 종료 예정(D-30) : ";
-            $sql = $baseSelect . " WHERE L.TYPE = '무상' AND L.D_DATE BETWEEN CURDATE() AND '$d_date_tobe_expired' ORDER BY L.D_DATE ASC";
+            $where = "L.TYPE = '무상' AND L.D_DATE BETWEEN CURDATE() AND '$d_date_tobe_expired'";
+            $order = "ORDER BY L.D_DATE ASC";
             break;
-            
-        case "003": // 유상 보증기간 만료
+        case "003":
             $message = "유상 보증기간 만료 : ";
-            $sql = $baseSelect . " WHERE L.TYPE = '유상' AND L.D_DATE <= CURDATE() ORDER BY L.D_DATE DESC";
+            $where = "L.TYPE = '유상' AND L.D_DATE <= CURDATE()";
+            $order = "ORDER BY L.D_DATE DESC";
             break;
-            
-        case "004": // 무상 보증기간 만료
+        case "004":
             $message = "무상 보증기간 만료 : ";
-            $sql = $baseSelect . " WHERE L.TYPE = '무상' AND L.D_DATE <= CURDATE() ORDER BY L.D_DATE DESC";
+            $where = "L.TYPE = '무상' AND L.D_DATE <= CURDATE()";
+            $order = "ORDER BY L.D_DATE DESC";
             break;
-            
         default:
             $message = "전체 : ";
-            $sql = $baseSelect . " ORDER BY L.SALE_ID DESC";
+            $where = "1";
+            $order = "ORDER BY L.SALE_ID DESC";
             break;
     }
-    
+
+    $sql = "$baseSelect WHERE $where $order";
+
+    if ($limit !== null && $offset !== null) {
+        $sql .= " LIMIT $limit OFFSET $offset";
+    }
+
     return ['sql' => $sql, 'message' => $message];
 }
 
@@ -199,40 +243,40 @@ switch ($from_url_path) {
         echo "</div>";
         break;
 
-        case "/sales/deviceMain.php":
-            // 디버깅 정보 출력
-            // echo "<div style='background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc;'>";
-            // echo "Source: DeviceMain<br>";
+    case "/sales/deviceMain.php":
+        // 디버깅 정보 출력
+        // echo "<div style='background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc;'>";
+        // echo "Source: DeviceMain<br>";
+        
+        if (isset($_GET['SN'])) {
+            $sn = mysqli_real_escape_string($dbconnect, $_GET['SN']);
+            $query = "SELECT L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, 
+                             L.INSPECTION, L.SUPPORT, L.REF, V.NAME AS VENDOR_NAME
+                      FROM LICENSE AS L
+                      JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
+                      JOIN VENDOR AS V ON S.V_ID = V.V_ID
+                      WHERE L.SN = '$sn'
+                      ORDER BY L.SALE_ID DESC";
             
-            if (isset($_GET['SN'])) {
-                $sn = mysqli_real_escape_string($dbconnect, $_GET['SN']);
-                $query = "SELECT L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, 
-                                 L.INSPECTION, L.SUPPORT, L.REF, V.NAME AS VENDOR_NAME
-                          FROM LICENSE AS L
-                          JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
-                          JOIN VENDOR AS V ON S.V_ID = V.V_ID
-                          WHERE L.SN = '$sn'
-                          ORDER BY L.SALE_ID DESC";
-                
-                $message = "SN으로 조회: " . $sn;
-                
-                // SQL 쿼리 출력
-                // echo "Query: " . htmlspecialchars($query) . "<br>";
-                
-                // 쿼리 실행
-                $result = mysqli_query($dbconnect, $query);
-                if (!$result) {
-                    echo "Query Error: " . mysqli_error($dbconnect) . "<br>";
-                } else {
-                    $totalCount = mysqli_num_rows($result);
-                    // echo "Result Count: " . $totalCount . "<br>";
-                }
+            $message = "SN으로 조회: " . $sn;
+            
+            // SQL 쿼리 출력
+            // echo "Query: " . htmlspecialchars($query) . "<br>";
+            
+            // 쿼리 실행
+            $result = mysqli_query($dbconnect, $query);
+            if (!$result) {
+                echo "Query Error: " . mysqli_error($dbconnect) . "<br>";
             } else {
-                // echo "No SN parameter provided<br>";
-                goto DEFAULT_PAGE;
+                $totalCount = mysqli_num_rows($result);
+                // echo "Result Count: " . $totalCount . "<br>";
             }
-            // echo "</div>";
-            break;
+        } else {
+            // echo "No SN parameter provided<br>";
+            goto DEFAULT_PAGE;
+        }
+        // echo "</div>";
+        break;
         
     default:
         DEFAULT_PAGE:
@@ -318,28 +362,19 @@ if ($sale_ids) {
 // 결과 재설정 (원래대로 돌아가서 다시 사용 가능하게 함)
 mysqli_data_seek($result, 0);
 
-// 전체 페이지 수 계산
+// 1. 전체 데이터 개수 구하기
+$totalCount = get_count_from_dashboard($cmd);
 $totalPages = ceil($totalCount / $itemsPerPage);
 
-// LIMIT, OFFSET 계산
+// 2. 오프셋 계산
 $offset = ($page - 1) * $itemsPerPage;
 
-// 데이터 조회 쿼리
-$query = "SELECT L.*, S.SALE_ID, V.NAME AS VENDOR_NAME
-          FROM LICENSE L
-          JOIN SALES S ON L.SALE_ID = S.SALE_ID
-          JOIN VENDOR V ON S.V_ID = V.V_ID";
+// 3. 페이징 포함 데이터 쿼리 생성
+$queryInfo = get_sql_queried_from_dashboard($cmd, $itemsPerPage, $offset);
+$query = $queryInfo['sql'];
+$message = $queryInfo['message'];
 
-if (count($conditions) > 0) {
-    $query .= " WHERE " . implode(" AND ", $conditions);
-}
-
-// 문자열을 날짜처럼 변환해서 비교
-$query .= " ORDER BY 
-  STR_TO_DATE(SUBSTRING_INDEX(L.SALE_ID, '-', 1), '%y/%m/%d') DESC,
-  CAST(SUBSTRING_INDEX(L.SALE_ID, '-', -1) AS UNSIGNED) DESC
-  LIMIT $itemsPerPage OFFSET $offset";
-
+// 4. 쿼리 실행
 $result = mysqli_query($dbconnect, $query);
 if (!$result) {
     die("Query Failed: " . mysqli_error($dbconnect));
@@ -557,17 +592,24 @@ if (!$result) {
                     </table>
                     <div class="pagination-container text-center mt-3 mb-4">
                         <?php
-                        if ($page > 1) {
-                            $prevPage = $page - 1;
-                            echo "<a href='?page=$prevPage' class='btn btn-outline-primary me-2'>이전</a>";
-                        }
+                            // 현재 GET 파라미터 가져오기
+                            $queryParams = $_GET;
 
-                        echo " $page / $totalPages";
+                            if ($page > 1) {
+                                $prevPage = $page - 1;
+                                $queryParams['page'] = $prevPage;
+                                $prevUrl = '?' . http_build_query($queryParams);
+                                echo "<a href='" . htmlspecialchars($prevUrl) . "' class='btn btn-outline-primary me-2'>이전</a>";
+                            }
 
-                        if ($page < $totalPages) {
-                            $nextPage = $page + 1;
-                            echo "<a href='?page=$nextPage' class='btn btn-outline-primary ms-2'>다음</a>";
-                        }
+                            echo " $page / $totalPages ";
+
+                            if ($page < $totalPages) {
+                                $nextPage = $page + 1;
+                                $queryParams['page'] = $nextPage;
+                                $nextUrl = '?' . http_build_query($queryParams);
+                                echo "<a href='" . htmlspecialchars($nextUrl) . "' class='btn btn-outline-primary ms-2'>다음</a>";
+                            }
                         ?>
                     </div>
                 </div>

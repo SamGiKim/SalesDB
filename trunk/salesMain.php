@@ -53,7 +53,7 @@ $receivedSaleID = null; // 또는 적절한 값
 $receivedOrderNo = null; // 또는 적절한 값
 
 // selectSales 함수를 사용하여 필요한 조건을 적용한 SQL 쿼리를 생성
-$sql = selectSales($sortBy, $receivedSN, $receivedSaleID, $receivedOrderNo);
+// $sql = selectSales($sortBy, $receivedSN, $receivedSaleID, $receivedOrderNo);
 
 //dashboard_search_result.php 에서 받은 sale_ids
 if (isset($_GET['sale_ids'])) {
@@ -63,15 +63,6 @@ if (isset($_GET['sale_ids'])) {
 }
 
 $action = $_GET['action'] ?? "";  // PHP 7 이후의 null coalescing operator를 사용
-
-
-
-//dashboard_search_result.php 에서 받은 sale_ids
-if (isset($_GET['sale_ids'])) {
-    $saleIds = explode(",", $_GET['sale_ids']);  // 문자열을 배열로 변환
-} else {
-    $saleIds = [];
-}
 
 //deviceMain.php, licenseMain.php에서 받은SN, SALE_ID, ORDER_NO를 링크로(GET) 클릭해서 받아와서 td에 넣어주기 
 $receivedSN = isset($_GET['SN']) ? $_GET['SN'] : null;
@@ -133,6 +124,7 @@ function selectSales($sortBy, $receivedSN = null, $receivedSaleID = null, $recei
         $sql .= " WHERE " . implode(' AND ', $conditions);
     }
 
+    // echo $sql;
     $sql .= " GROUP BY s.SALE_ID ";  // SALE_ID 기준으로 그룹화
     $sql .= " ORDER BY $sortBy DESC";
 
@@ -148,13 +140,9 @@ function searchFunction(
     $cId = "",
     $cbizId = "",
     $bizId = "",
-    $deliverDateFrom = "",
-    $deliverDateTo = "",
-    $sDateFrom = "",
-    $sDateTo = "",
-    $dDateFrom = "",
-    $dDateTo = "",
-    $warranty = "",
+    $deliverDate = "",
+    $sDate = "",
+    $dDate = "",
     $orderNo = "",
     $ref = ""
 ) {
@@ -195,26 +183,14 @@ function searchFunction(
     if (!empty($bizId)) {
         $conditions[] = "b.NAME LIKE '%" . $bizId . "%'";
     }
-    if (!empty($deliverDateFrom)) {
-        $conditions[] = "s.DELIVER_DATE >= '" . $deliverDateFrom . "'";
+    if (!empty($deliverDate)) {
+        $conditions[] = "s.DELIVER_DATE = '" . $deliverDate . "'";
     }
-    if (!empty($deliverDateTo)) {
-        $conditions[] = "s.DELIVER_DATE <= '" . $deliverDateTo . "'";
+    if (!empty($sDate)) {
+        $conditions[] = "s.S_DATE = '" . $sDate . "'";
     }
-    if (!empty($sDateFrom)) {
-        $conditions[] = "s.S_DATE >= '" . $sDateFrom . "'";
-    }
-    if (!empty($sDateTo)) {
-        $conditions[] = "s.S_DATE <= '" . $sDateTo . "'";
-    }
-    if (!empty($dDateFrom)) {
-        $conditions[] = "s.D_DATE >= '" . $dDateFrom . "'";
-    }
-    if (!empty($dDateTo)) {
-        $conditions[] = "s.D_DATE <= '" . $dDateTo . "'";
-    }
-    if (!empty($warranty)) {
-        $conditions[] = "s.WARRANTY LIKE '%" . $warranty . "%'";
+    if (!empty($dDate)) {
+        $conditions[] = "s.D_DATE = '" . $dDate . "'";
     }
     if (!empty($orderNo)) {
         $conditions[] = "s.ORDER_NO LIKE '%" . $orderNo . "%'";
@@ -305,11 +281,16 @@ if (isset($_GET['condition']) && $_GET['condition'] == 'eos') {
     $totalCount = $response['dateCount'];
 
     // case2. sale_ids는 대시보드에서 통합검색 했을때 필터링해서 보여주는 것.
-} else if (isset($_GET['sale_ids']) && $_GET['sale_ids'] != '') {
+} // 필터가 있는 경우
+else if (isset($_GET['sale_ids']) && $_GET['sale_ids'] != '') {
     $saleIdsFilter = explode(',', $_GET['sale_ids']);
     $sortBy = "S_DATE";
-    $sql = selectSales($sortBy, null, $saleIdsFilter); // SN, SALE_ID, OrderNo 중 SALE_ID만 사용
-    $stmt = $dbconnect->prepare($sql);
+
+    // 전체 결과를 가져오는 쿼리 (페이징 없이 총 개수 구할 때)
+    $sqlTotal = selectSales($sortBy, null, $saleIdsFilter);
+
+
+    $stmt = $dbconnect->prepare($sqlTotal);
     if ($stmt->execute()) {
         $result = $stmt->get_result();
         $totalCount = mysqli_num_rows($result);
@@ -317,9 +298,8 @@ if (isset($_GET['condition']) && $_GET['condition'] == 'eos') {
         die('Query Error: ' . mysqli_error($dbconnect));
     }
     $stmt->close();
-
-    // case 3. salesSearch.php 통해 유입
-} else if ($action == "search") {
+}
+else if ($action == "search") {// case 3. salesSearch.php 통해 유입
     $message = "조건 검색: ";
     $sql = searchFunction(
         $_POST["saleId"] ?? "",
@@ -327,15 +307,11 @@ if (isset($_GET['condition']) && $_GET['condition'] == 'eos') {
         $_POST["cId"] ?? "",
         $_POST["cbizId"] ?? "",
         $_POST["bizId"] ?? "",
-        $_POST["deliverDateFrom"] ?? "",
-        $_POST["deliverDateTo"] ?? "",
-        $_POST["sDateFrom"] ?? "",
-        $_POST["sDateTo"] ?? "",
-        $_POST["dDateFrom"] ?? "",
-        $_POST["dDateTo"] ?? "",
-        $_POST["WARRANTY"] ?? "",
+        $_POST["deliverDate"] ?? "",
+        $_POST["sDate"] ?? "",
+        $_POST["dDate"] ?? "",
         $_POST["orderNo"] ?? "",
-        $_POST["REF"] ?? ""
+        $_POST["ref"] ?? ""
     );
     $result = mysqli_query($dbconnect, $sql);
     $totalCount = mysqli_num_rows($result); // 결과의 총 건수 업데이트
@@ -357,20 +333,61 @@ if (isset($_GET['condition']) && $_GET['condition'] == 'eos') {
 }
 
 // ------------------------------Pagination------------------------------
-// 한 페이지에 보여줄 아이템 수
-$itemsPerPage = 100;
-
-// 현재 페이지 번호 (GET 파라미터로 받음, 기본 1)
+$itemsPerPage = 50;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($page < 1) $page = 1;
-
-// 전체 페이지 수 계산
-$totalPages = ceil($totalCount / $itemsPerPage);
-
-// LIMIT, OFFSET 계산
 $offset = ($page - 1) * $itemsPerPage;
 
-// 데이터 조회 쿼리
+// 조건 분기
+$where = " WHERE 1=1 ";
+$params = [];
+$types = "";
+
+// eos 조건
+if (isset($_GET['condition']) && $_GET['condition'] === 'eos') {
+    $eos_start_date = $_GET['eos_start_date'] ?? null;
+    $eos_end_date = $_GET['eos_end_date'] ?? null;
+    if ($eos_start_date && $eos_end_date) {
+        $where .= " AND S.DELIVER_DATE BETWEEN ? AND ? ";
+        $params[] = $eos_start_date;
+        $params[] = $eos_end_date;
+        $types .= "ss";
+    }
+}
+// sale_ids 조건 (콤마로 구분된 SALE_ID 리스트)
+elseif (isset($_GET['sale_ids']) && !empty($_GET['sale_ids'])) {
+    $saleIds = explode(',', $_GET['sale_ids']);
+    // 동적 개수의 ? 와 타입 s 추가
+    $inClause = implode(',', array_fill(0, count($saleIds), '?'));
+    $where .= " AND S.SALE_ID IN ($inClause) ";
+    foreach ($saleIds as $id) {
+        $params[] = $id;
+        $types .= "s";
+    }
+}
+// else: 아무 조건 없음 = 전체 목록
+
+// 총 개수
+$sqlCount = "SELECT COUNT(DISTINCT S.SALE_ID) AS cnt
+             FROM SALES AS S
+             LEFT JOIN VENDOR AS V ON S.V_ID = V.V_ID
+             LEFT JOIN CUSTOMER AS C ON S.C_ID = C.C_ID
+             LEFT JOIN CUSTOMER AS CBIZ ON S.CBIZ_ID = CBIZ.C_ID
+             LEFT JOIN BUSINESS AS B ON S.BIZ_ID = B.BIZ_ID
+             LEFT JOIN DEVICE AS D ON S.ORDER_NO = D.ORDER_NO
+             $where";
+
+$stmt = $dbconnect->prepare($sqlCount);
+if ($types) $stmt->bind_param($types, ...$params);
+$stmt->execute();
+$res = $stmt->get_result();
+$row = $res->fetch_assoc();
+$totalCount = $row['cnt'] ?? 0;
+$stmt->close();
+
+$totalPages = ceil($totalCount / $itemsPerPage);
+
+// 데이터 조회
 $query = "SELECT S.SALE_ID,
                  V.NAME AS V_NAME,
                  C.NAME AS C_NAME,
@@ -390,20 +407,25 @@ $query = "SELECT S.SALE_ID,
           LEFT JOIN CUSTOMER AS CBIZ ON S.CBIZ_ID = CBIZ.C_ID
           LEFT JOIN BUSINESS AS B ON S.BIZ_ID = B.BIZ_ID
           LEFT JOIN DEVICE AS D ON S.ORDER_NO = D.ORDER_NO
-          GROUP BY S.SALE_ID";
+          $where
+          GROUP BY S.SALE_ID
+          ORDER BY 
+            STR_TO_DATE(SUBSTRING_INDEX(S.SALE_ID, '-', 1), '%y/%m/%d') DESC,
+            CAST(SUBSTRING_INDEX(S.SALE_ID, '-', -1) AS UNSIGNED) DESC
+          LIMIT ? OFFSET ?";
 
-// 문자열을 날짜처럼 변환해서 비교
-$query .= " ORDER BY 
-  STR_TO_DATE(SUBSTRING_INDEX(S.SALE_ID, '-', 1), '%y/%m/%d') DESC,
-  CAST(SUBSTRING_INDEX(S.SALE_ID, '-', -1) AS UNSIGNED) DESC
-  LIMIT $itemsPerPage OFFSET $offset";
+$params[] = $itemsPerPage;
+$params[] = $offset;
+$types .= "ii";
 
-$result = mysqli_query($dbconnect, $query);
-if (!$result) {
-    die("Query Failed: " . mysqli_error($dbconnect));
-}
+$stmt = $dbconnect->prepare($query);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$salesData = $result->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
 // ------------------------------Pagination------------------------------
-
 ?>
 
 <!DOCTYPE html>
@@ -561,7 +583,7 @@ if (!$result) {
 
                                                             foreach ($deviceSNs as $deviceSN) {
                                                                 $deviceSN = trim($deviceSN); // 공백 제거
-                                                                $deviceSNSaleIdLink = 'deviceMain.php?SN=' . urlencode($deviceSN) . '&ORDER_NO=' . urlencode($details['ORDER_NO']);
+                                                                $deviceSNSaleIdLink = 'deviceMain.php?SN=' . urlencode($deviceSN);
                                                                 $links[] = '<a href="' . $deviceSNSaleIdLink . '">' . $deviceSN . '</a>';
                                                             }
 
@@ -612,16 +634,23 @@ if (!$result) {
                     </table>
                     <div class="pagination-container text-center mt-3 mb-4">
                         <?php
+                        // 현재 GET 파라미터 가져오기
+                        $queryParams = $_GET;
+
                         if ($page > 1) {
                             $prevPage = $page - 1;
-                            echo "<a href='?page=$prevPage' class='btn btn-outline-primary me-2'>이전</a>";
+                            $queryParams['page'] = $prevPage;
+                            $prevUrl = '?' . http_build_query($queryParams);
+                            echo "<a href='" . htmlspecialchars($prevUrl) . "' class='btn btn-outline-primary me-2'>이전</a>";
                         }
 
-                        echo " $page / $totalPages";
+                        echo " $page / $totalPages ";
 
                         if ($page < $totalPages) {
                             $nextPage = $page + 1;
-                            echo "<a href='?page=$nextPage' class='btn btn-outline-primary ms-2'>다음</a>";
+                            $queryParams['page'] = $nextPage;
+                            $nextUrl = '?' . http_build_query($queryParams);
+                            echo "<a href='" . htmlspecialchars($nextUrl) . "' class='btn btn-outline-primary ms-2'>다음</a>";
                         }
                         ?>
                     </div>
