@@ -207,17 +207,23 @@ if (!$result) {
                     </table>
                     <div class="pagination-container text-center mt-3 mb-4">
                         <?php
-                        if ($page > 1) {
-                            $prevPage = $page - 1;
-                            echo "<a href='?page=$prevPage' class='btn btn-outline-primary me-2'>이전</a>";
-                        }
+                            // 현재 GET 파라미터 가져오기
+                            $queryParams = $_GET;
 
-                        echo " $page / $totalPages";
+                            if ($page > 1) {
+                                $prevPage = $page - 1;
+                                $queryParams['page'] = $prevPage;
+                                $prevUrl = '?' . http_build_query($queryParams);
+                                echo "<a href='" . htmlspecialchars($prevUrl) . "' class='btn btn-outline-primary me-2'>이전</a>";
+                            }
+                            echo " $page / $totalPages ";
 
-                        if ($page < $totalPages) {
-                            $nextPage = $page + 1;
-                            echo "<a href='?page=$nextPage' class='btn btn-outline-primary ms-2'>다음</a>";
-                        }
+                            if ($page < $totalPages) {
+                                $nextPage = $page + 1;
+                                $queryParams['page'] = $nextPage;
+                                $nextUrl = '?' . http_build_query($queryParams);
+                                echo "<a href='" . htmlspecialchars($nextUrl) . "' class='btn btn-outline-primary ms-2'>다음</a>";
+                            }
                         ?>
                     </div>
                     <?php

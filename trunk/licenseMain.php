@@ -665,7 +665,6 @@ if (!$result) {
                                 $prevUrl = '?' . http_build_query($queryParams);
                                 echo "<a href='" . htmlspecialchars($prevUrl) . "' class='btn btn-outline-primary me-2'>이전</a>";
                             }
-
                             echo " $page / $totalPages ";
 
                             if ($page < $totalPages) {
