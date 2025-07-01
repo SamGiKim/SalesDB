@@ -277,7 +277,71 @@ switch ($from_url_path) {
         }
         // echo "</div>";
         break;
+    
+    // 테스트 코드
+    case "/sales_test/dashboard.html":
+    case "/sales_test/dashboard.php":
+        if (!isset($_GET["cmd"])) {
+            goto DEFAULT_PAGE;
+        }
         
+        // 디버깅 정보 출력
+        // echo "<div style='background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc;'>";
+        // echo "Source: Dashboard<br>";
+        // echo "CMD: " . $_GET["cmd"] . "<br>";
+        
+        $dashboard_result = get_sql_queried_from_dashboard($_GET["cmd"]);
+        $query = $dashboard_result['sql'];
+        $message = $dashboard_result['message'];
+        
+        // SQL 쿼리 출력
+        // echo "Query: " . htmlspecialchars($query) . "<br>";
+        
+        // 쿼리 실행
+        $result = mysqli_query($dbconnect, $query);
+        if (!$result) {
+            // echo "Query Error: " . mysqli_error($dbconnect) . "<br>";
+        } else {
+            $totalCount = mysqli_num_rows($result);
+            // echo "Result Count: " . $totalCount . "<br>";
+        }
+        echo "</div>";
+        break;
+
+    case "/sales_test/deviceMain.php":
+        // 디버깅 정보 출력
+        // echo "<div style='background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc;'>";
+        // echo "Source: DeviceMain<br>";
+        
+        if (isset($_GET['SN'])) {
+            $sn = mysqli_real_escape_string($dbconnect, $_GET['SN']);
+            $query = "SELECT L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, 
+                             L.INSPECTION, L.SUPPORT, L.REF, V.NAME AS VENDOR_NAME
+                      FROM LICENSE AS L
+                      JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
+                      JOIN VENDOR AS V ON S.V_ID = V.V_ID
+                      WHERE L.SN = '$sn'
+                      ORDER BY L.SALE_ID DESC";
+            
+            $message = "SN으로 조회: " . $sn;
+            
+            // SQL 쿼리 출력
+            // echo "Query: " . htmlspecialchars($query) . "<br>";
+            
+            // 쿼리 실행
+            $result = mysqli_query($dbconnect, $query);
+            if (!$result) {
+                echo "Query Error: " . mysqli_error($dbconnect) . "<br>";
+            } else {
+                $totalCount = mysqli_num_rows($result);
+                // echo "Result Count: " . $totalCount . "<br>";
+            }
+        } else {
+            // echo "No SN parameter provided<br>";
+            goto DEFAULT_PAGE;
+        }
+        // echo "</div>";
+        break;
     default:
         DEFAULT_PAGE:
         // 디버깅 정보 출력
