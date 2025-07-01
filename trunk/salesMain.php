@@ -2,13 +2,12 @@
 // sainsMain.php
 require_once "auth.php";
 
-// AJAX 요청인지 확인
-$isAjax = isset($_GET['ajax']) && $_GET['ajax'] == '1';
+// 요청 확인
+$isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] == 'true';
 
-if ($isAjax) {
-    header('Content-Type: application/json');  // JSON 응답 설정
+if (!$isHtmx) {
+    include 'navbar.php';
 }
-
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -18,7 +17,6 @@ require_once "sales_db.php";
 
 // UTF-8 인코딩 설정
 mysqli_set_charset($dbconnect, "utf8");
-
 
 // 가격 볼수 있는 권한 제한(LOGIN 테이블의 permission열이 admin이나 sales 이고 IP가 내부일때만  TOT_PRICE 볼 수 있다.)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,7 +42,6 @@ if (substr($_SERVER['REMOTE_ADDR'], 0, 3) !== '192') {
     $isExternalAccess = true;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 $today = date("Y-m-d");
 $message = "전체 : ";
 $sortBy = 'SALE_ID'; // 기본 정렬 기준
@@ -86,7 +83,6 @@ function selectSales($sortBy, $receivedSN = null, $receivedSaleID = null, $recei
     $sql .= "s.REF as REF, ";
     $sql .= "GROUP_CONCAT(d.SN) as SN_LIST ";
     $sql .= "FROM SALES as s ";
-
     $sql .= "LEFT JOIN VENDOR AS v ON s.V_ID = v.V_ID ";
     $sql .= "LEFT JOIN CUSTOMER AS c ON s.C_ID = c.C_ID ";
     $sql .= "LEFT JOIN CUSTOMER AS cbiz ON s.CBIZ_ID = cbiz.C_ID ";
@@ -101,112 +97,28 @@ function selectSales($sortBy, $receivedSN = null, $receivedSaleID = null, $recei
     if (!is_null($receivedSaleID) && !is_array($receivedSaleID)) {
         $receivedSaleID = [$receivedSaleID];
     }
-
     if (!is_null($receivedSN) && is_array($receivedSN)) {
         $snValues = implode(',', array_map(function ($value) {
             return "'$value'";
         }, $receivedSN));
         $conditions[] = "d.SN IN ($snValues)";
     }
-
     if (!is_null($receivedSaleID) && is_array($receivedSaleID)) {
         $saleIdValues = implode(',', array_map(function ($value) {
             return "'$value'";
         }, $receivedSaleID));
         $conditions[] = "s.SALE_ID IN ($saleIdValues)";
     }
-
     if (!is_null($receivedOrderNo)) {
         $conditions[] = "s.ORDER_NO = '$receivedOrderNo'";
     }
-
     if (!empty($conditions)) {
         $sql .= " WHERE " . implode(' AND ', $conditions);
     }
-
-    // echo $sql;
     $sql .= " GROUP BY s.SALE_ID ";  // SALE_ID 기준으로 그룹화
     $sql .= " ORDER BY $sortBy DESC";
-
     return $sql;
 }
-
-
-
-//salesSearch.php로 들어왔을 때(검색기능)
-function searchFunction(
-    $saleId,
-    $vId = "",
-    $cId = "",
-    $cbizId = "",
-    $bizId = "",
-    $deliverDate = "",
-    $sDate = "",
-    $dDate = "",
-    $orderNo = "",
-    $ref = ""
-) {
-    $sql =  "SELECT s.SALE_ID as SALE_ID, ";
-    $sql .= "v.NAME  as V_NAME, ";
-    $sql .= "c.NAME  as C_NAME, ";
-    $sql .= "cbiz.NAME as CBIZ_NAME, ";
-    $sql .= "b.NAME as BIZ_NAME, ";
-    $sql .= "s.TOT_PRICE as TOT_PRICE, ";
-    $sql .= "s.DELIVER_DATE as DELIVER_DATE, ";
-    $sql .= "s.S_DATE as S_DATE, ";
-    $sql .= "s.D_DATE as D_DATE, ";
-    $sql .= "s.WARRANTY as WARRANTY, ";
-    $sql .= "s.ORDER_NO as ORDER_NO, ";
-    $sql .= "s.REF as REF, ";
-    $sql .= "d.SN_LIST as SN_LIST "; // SN_LIST를 결과에 추가
-    $sql .= "FROM SALES as s ";
-    $sql .= "LEFT JOIN VENDOR AS v ON s.V_ID = v.V_ID ";
-    $sql .= "LEFT JOIN CUSTOMER AS c ON s.C_ID = c.C_ID ";
-    $sql .= "LEFT JOIN CUSTOMER AS cbiz ON s.CBIZ_ID = cbiz.C_ID ";
-    $sql .= "LEFT JOIN BUSINESS AS b ON s.BIZ_ID = b.BIZ_ID ";
-    $sql .= "LEFT JOIN (SELECT ORDER_NO, GROUP_CONCAT(SN) AS SN_LIST FROM DEVICE GROUP BY ORDER_NO) d ON s.ORDER_NO = d.ORDER_NO "; // DEVICE 테이블과 조인하여 SN_LIST 생성
-
-    $conditions = [];
-
-    if (!empty($saleId)) {
-        $conditions[] = "s.SALE_ID LIKE '%" . $saleId . "%'";
-    }
-    if (!empty($vId)) {
-        $conditions[] = "v.NAME LIKE '%" . $vId . "%'";
-    }
-    if (!empty($cId)) {
-        $conditions[] = "c.NAME LIKE '%" . $cId . "%'";
-    }
-    if (!empty($cbizId)) {
-        $conditions[] = "cbiz.NAME LIKE '%" . $cbizId . "%'";
-    }
-    if (!empty($bizId)) {
-        $conditions[] = "b.NAME LIKE '%" . $bizId . "%'";
-    }
-    if (!empty($deliverDate)) {
-        $conditions[] = "s.DELIVER_DATE = '" . $deliverDate . "'";
-    }
-    if (!empty($sDate)) {
-        $conditions[] = "s.S_DATE = '" . $sDate . "'";
-    }
-    if (!empty($dDate)) {
-        $conditions[] = "s.D_DATE = '" . $dDate . "'";
-    }
-    if (!empty($orderNo)) {
-        $conditions[] = "s.ORDER_NO LIKE '%" . $orderNo . "%'";
-    }
-    if (!empty($ref)) {
-        $conditions[] = "s.REF LIKE '%" . $ref . "%'";
-    }
-
-    if (!empty($conditions)) {
-        $sql .= "WHERE " . implode(" AND ", $conditions) . " ";
-    }
-
-    $sql .= "ORDER BY s.SALE_ID DESC";
-    return $sql;
-}
-
 
 //EOS 처리함수
 function handleEosQuery($eos_start_date, $eos_end_date, $dbconnect)
@@ -264,15 +176,12 @@ function handleEosQuery($eos_start_date, $eos_end_date, $dbconnect)
         die('Detailed Query Error: ' . mysqli_error($dbconnect));
     }
     $stmt->close();
-
     return ['dateCount' => $dateCount, 'salesData' => $salesData];
 }
 
 $response = handleEosQuery($_GET['eos_start_date'] ?? null, $_GET['eos_end_date'] ?? null, $dbconnect);
 $dateCount = $response['dateCount'];
 $result = $response['salesData'];
-
-
 
 // case 1. eos(dashboard.php에서 유입)
 if (isset($_GET['condition']) && $_GET['condition'] == 'eos') {
@@ -285,11 +194,8 @@ if (isset($_GET['condition']) && $_GET['condition'] == 'eos') {
 else if (isset($_GET['sale_ids']) && $_GET['sale_ids'] != '') {
     $saleIdsFilter = explode(',', $_GET['sale_ids']);
     $sortBy = "S_DATE";
-
     // 전체 결과를 가져오는 쿼리 (페이징 없이 총 개수 구할 때)
     $sqlTotal = selectSales($sortBy, null, $saleIdsFilter);
-
-
     $stmt = $dbconnect->prepare($sqlTotal);
     if ($stmt->execute()) {
         $result = $stmt->get_result();
@@ -299,36 +205,14 @@ else if (isset($_GET['sale_ids']) && $_GET['sale_ids'] != '') {
     }
     $stmt->close();
 }
-else if ($action == "search") {// case 3. salesSearch.php 통해 유입
-    $message = "조건 검색: ";
-    $sql = searchFunction(
-        $_POST["saleId"] ?? "",
-        $_POST["vId"] ?? "",
-        $_POST["cId"] ?? "",
-        $_POST["cbizId"] ?? "",
-        $_POST["bizId"] ?? "",
-        $_POST["deliverDate"] ?? "",
-        $_POST["sDate"] ?? "",
-        $_POST["dDate"] ?? "",
-        $_POST["orderNo"] ?? "",
-        $_POST["ref"] ?? ""
-    );
-    $result = mysqli_query($dbconnect, $sql);
-    $totalCount = mysqli_num_rows($result); // 결과의 총 건수 업데이트
-    if (!$result) {
-        die('Query Error: ' . mysqli_error($dbconnect));
-    }
-
-    // case 4. deviceMain.php, licenseMain.php의 SN, ORDER_NO, SALE_ID를 통해 들 유입
-} else {
+// case 4. deviceMain.php, licenseMain.php의 SN, ORDER_NO, SALE_ID를 통해 들 유입
+else {
     $sortBy = $_GET['sort'] ?? 'SALE_ID'; // 기본 정렬 기준
     $sql = selectSales($sortBy, $receivedSN, $receivedSaleID, $receivedOrderNo);
-
     $result = mysqli_query($dbconnect, $sql);
     if (!$result) {
         die("Query Failed: " . mysqli_error($dbconnect));
     }
-
     $totalCount = mysqli_num_rows($result); // 결과의 총 건수 업데이트
 }
 
@@ -365,7 +249,58 @@ elseif (isset($_GET['sale_ids']) && !empty($_GET['sale_ids'])) {
         $types .= "s";
     }
 }
-// else: 아무 조건 없음 = 전체 목록
+
+// 검색 조건
+if (!empty($_GET['saleId'])) {
+    $where .= " AND S.SALE_ID LIKE ? ";
+    $params[] = "%" . $_GET['saleId'] . "%";
+    $types .= "s";
+}
+if (!empty($_GET['vName'])) {
+    $where .= " AND V.NAME LIKE ? ";
+    $params[] = "%" . $_GET['vName'] . "%";
+    $types .= "s";
+}
+if (!empty($_GET['cName'])) {
+    $where .= " AND C.NAME LIKE ? ";
+    $params[] = "%" . $_GET['cName'] . "%";
+    $types .= "s";
+}
+if (!empty($_GET['cbizName'])) {
+    $where .= " AND CBIZ.NAME LIKE ? ";
+    $params[] = "%" . $_GET['cbizName'] . "%";
+    $types .= "s";
+}
+if (!empty($_GET['bizName'])) {
+    $where .= " AND B.NAME LIKE ? ";
+    $params[] = "%" . $_GET['bizName'] . "%";
+    $types .= "s";
+}
+if (!empty($_GET['deliverDate'])) {
+    $where .= " AND S.DELIVER_DATE = ? ";
+    $params[] = $_GET['deliverDate'];
+    $types .= "s";
+}
+if (!empty($_GET['sDate'])) {
+    $where .= " AND S.S_DATE = ? ";
+    $params[] = $_GET['sDate'];
+    $types .= "s";
+}
+if (!empty($_GET['dDate'])) {
+    $where .= " AND S.D_DATE = ? ";
+    $params[] = $_GET['dDate'];
+    $types .= "s";
+}
+if (!empty($_GET['orderNo'])) {
+    $where .= " AND S.ORDER_NO LIKE ? ";
+    $params[] = "%" . $_GET['orderNo'] . "%";
+    $types .= "s";
+}
+if (!empty($_GET['ref'])) {
+    $where .= " AND S.REF LIKE ? ";
+    $params[] = "%" . $_GET['ref'] . "%";
+    $types .= "s";
+}
 
 // 총 개수
 $sqlCount = "SELECT COUNT(DISTINCT S.SALE_ID) AS cnt
@@ -378,15 +313,20 @@ $sqlCount = "SELECT COUNT(DISTINCT S.SALE_ID) AS cnt
              $where";
 
 $stmt = $dbconnect->prepare($sqlCount);
-if ($types) $stmt->bind_param($types, ...$params);
+if ($types !== "") {
+    $stmt->bind_param($types, ...$params);
+}
 $stmt->execute();
 $res = $stmt->get_result();
 $row = $res->fetch_assoc();
 $totalCount = $row['cnt'] ?? 0;
 $stmt->close();
-
 $totalPages = ceil($totalCount / $itemsPerPage);
-
+$paramsWithLimit = $params; 
+$typesWithLimit = $types;
+$paramsWithLimit[] = $itemsPerPage;
+$paramsWithLimit[] = $offset;
+$typesWithLimit .= "ii";
 // 데이터 조회
 $query = "SELECT S.SALE_ID,
                  V.NAME AS V_NAME,
@@ -414,15 +354,10 @@ $query = "SELECT S.SALE_ID,
             CAST(SUBSTRING_INDEX(S.SALE_ID, '-', -1) AS UNSIGNED) DESC
           LIMIT ? OFFSET ?";
 
-$params[] = $itemsPerPage;
-$params[] = $offset;
-$types .= "ii";
-
 $stmt = $dbconnect->prepare($query);
-$stmt->bind_param($types, ...$params);
+$stmt->bind_param($typesWithLimit, ...$paramsWithLimit);
 $stmt->execute();
 $result = $stmt->get_result();
-
 $salesData = $result->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 // ------------------------------Pagination------------------------------
@@ -454,11 +389,7 @@ $stmt->close();
     </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
 </head>
-
 <body>
-    <?php if ($action != "search") {
-        include 'navbar.php';
-    } ?>
     <div class="container-fluid mt-5 main-screen">
         <div class="row">
             <div class="col-12 text-center">
@@ -666,5 +597,4 @@ $stmt->close();
             document.body.appendChild(el);
         </script>
 </body>
-
 </html>

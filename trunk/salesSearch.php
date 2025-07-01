@@ -35,8 +35,13 @@ mysqli_set_charset($dbconnect, "utf8");
                 <div class="btn-cancel position-relative top-0">
                     <button type="button" class="btn-close" aria-label="Close" onclick="redirectToSalesMain()"></button>
                 </div>
-                <form id="searchForm" hx-post="salesMain.php?action=search" hx-trigger="submit" hx-target=".main">
-                    <table class="inputTbl">
+                <form 
+                    id="searchForm"
+                    method="get"
+                    hx-get="salesMain.php?action=search"
+                    hx-trigger="submit"
+                    hx-target=".main"
+                    hx-push-url="true">
                         <tr>
                             <td><label for="saleId">판매번호</label></td>
                             <td><input type="text" class="input" name="saleId" id="saleId">
@@ -44,30 +49,30 @@ mysqli_set_charset($dbconnect, "utf8");
                         </td>
                         </tr>
                         <tr>
-                            <td><label for="vId">납품처</label></td>
+                            <td><label for="vName">납품처</label></td>
                             <td>
-                                <input type="text" class="input" name="vId" id="vId">
+                                <input type="text" class="input" name="vName" id="vName">
                                 <span class="error-message">&nbsp;</span>
                             </td>
                         </tr>
                         <tr> 
-                            <td><label for="cId">거래처</label></td>
+                            <td><label for="cName">거래처</label></td>
                             <td>
-                                <input type="text" class="input" name="cId" id="cId">
+                                <input type="text" class="input" name="cName" id="cName">
                                 <span class="error-message">&nbsp;</span>
                             </td>
                         </tr>
                         <tr>
-                            <td><label for="pbizId">거래처영업</label></td>
+                            <td><label for="pbizName">거래처영업</label></td>
                             <td>
-                                <input type="text" class="input" name="cbizId" id="cbizId">
+                                <input type="text" class="input" name="pbizName" id="pbizName">
                                 <span class="error-message">&nbsp;</span>
                             </td>
                         </tr>
                         <tr>
-                            <td><label for="bizId">담당자명</label></td>
+                            <td><label for="bizName">담당자명</label></td>
                             <td>
-                                <input type="text" class="input" name="bizId" id="bizId">
+                                <input type="text" class="input" name="bizName" id="bizName">
                                 <span class="error-message">&nbsp;</span>
                             </td>
                         </tr>
@@ -80,7 +85,7 @@ mysqli_set_charset($dbconnect, "utf8");
                             </td>
                         </tr>
                         <tr>
-                            <td><label for="dDate">유지보수 시작일</label></td>
+                            <td><label for="sDate">유지보수 시작일</label></td>
                             <td>
                                 <!-- Input for start date -->
                                 <input type="date" class="input short" name="sDate" id="sDate">
