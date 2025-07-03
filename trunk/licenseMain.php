@@ -467,7 +467,7 @@ if ($searchMode) {
     $totalPages = ceil($totalCount / $itemsPerPage);
 
     $offset = ($page - 1) * $itemsPerPage;
-    $sqlData = "SELECT L.*, V.NAME AS vendor_name
+    $sqlData = "SELECT L.*, V.NAME AS VENDOR_NAME
                 FROM LICENSE AS L
                 JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
                 JOIN VENDOR AS V ON S.V_ID = V.V_ID
