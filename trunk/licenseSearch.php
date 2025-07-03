@@ -8,152 +8,7 @@ error_reporting(E_ALL);
 require_once "sales_db.php";
 
 mysqli_set_charset($dbconnect, "utf8");
-
-$conditions = array();
-$params = array();
-$types = '';
-
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
-  $currentDate = new DateTime();
-  $currentFormattedDate = $currentDate->format('Y-m-d');
-  $saleId = $_POST["saleId"];
-  $SN = $_POST["SN"];
-  $type = $_POST["type"];
-  $sDateFrom = $_POST["sDateFrom"];
-  $sDateTo = $_POST["sDateTo"];
-  $dDateFrom = $_POST["dDateFrom"];
-  $dDateTo = $_POST["dDateTo"];
-  $ref = $_POST["ref"];
-  $inspection = $_POST["inspection"];
-  $support = $_POST["support"];
-  // $vendorName = $_POST["vendorName"]; // 이렇게 하면 오류가 남. 
-   // VENDOR_NAME에 대한 처리 추가
-   if (!empty($_REQUEST['vendorName'])) {
-    $vendorName = mysqli_real_escape_string($dbconnect, $_REQUEST['vendorName']);
-    $conditions[] = "V.NAME LIKE '%" . $vendorName . "%'";
-}
-
-
-$sql = "SELECT LICENSE.*, VENDOR.NAME AS VENDOR_NAME FROM LICENSE 
-INNER JOIN SALES ON LICENSE.SALE_ID = SALES.SALE_ID 
-INNER JOIN VENDOR ON SALES.V_ID = VENDOR.V_ID 
-WHERE 1=1";
-
-  if (!empty($saleId)) {
-      $conditions[] = "LICENSE.SALE_ID LIKE ?";
-      $params[] = "%" . $saleId . "%";
-      $types .= 's';
-  }
-  if (!empty($SN)) {
-      $conditions[] = "LICENSE.SN LIKE ?";
-      $params[] = "%" . $SN . "%";
-      $types .= 's';
-  }
-  if (!empty($type)) {
-      $conditions[] = "LICENSE.TYPE LIKE ?";
-      $params[] = "%" . $type . "%";
-      $types .= 's';
-  }
-  if (!empty($sDateFrom) && !empty($sDateTo)) {
-      $conditions[] = "LICENSE.S_DATE BETWEEN ? AND ?";
-      $params[] = $sDateFrom;
-      $params[] = $sDateTo;
-      $types .= 'ss';
-  } elseif (!empty($sDateFrom)) {
-      $conditions[] = "LICENSE.S_DATE >= ?";
-      $params[] = $sDateFrom;
-      $types .= 's';
-  } elseif (!empty($sDateTo)) {
-      $conditions[] = "LICENSE.S_DATE <= ?";
-      $params[] = $sDateTo;
-      $types .= 's';
-  }
-
-  if (!empty($dDateFrom) && !empty($dDateTo)) {
-      $conditions[] = "LICENSE.D_DATE BETWEEN ? AND ?";
-      $params[] = $dDateFrom;
-      $params[] = $dDateTo;
-      $types .= 'ss';
-  } elseif (!empty($dDateFrom)) {
-      $conditions[] = "LICENSE.D_DATE >= ?";
-      $params[] = $dDateFrom;
-      $types .= 's';
-  } elseif (!empty($dDateTo)) {
-      $conditions[] = "LICENSE.D_DATE <= ?";
-      $params[] = $dDateTo;
-      $types .= 's';
-  }
-
-  if (!empty($inspection)) {
-      $conditions[] = "LICENSE.INSPECTION LIKE ?";
-      $params[] = "%" . $inspection . "%";
-      $types .= 's';
-  }
-  if (!empty($support)) {
-      $conditions[] = "LICENSE.SUPPORT LIKE ?";
-      $params[] = "%" . $support . "%";
-      $types .= 's';
-  }
-
-  if (!empty($ref)) {
-      $conditions[] = "LICENSE.REF LIKE ?";
-      $params[] = "%" . $ref . "%";
-      $types .= 's';
-  }
-
-  if (!empty($vendorName)) { // 추가된 부분: 거래처 이름
-      $conditions[] = "VENDOR.NAME LIKE ?"; // where 절에서는 DB 테이블의 실제 컬럼 이름 사용. 별칭 사용 X
-      $params[] = "%" . $vendorName . "%";
-      $types .= 's';
-  }
-
-  // 조건이 있을 때만 WHERE 절 추가
-  if (!empty($conditions)) {
-      $sql .= " AND " . implode(" AND ", $conditions);
-  }
-
-  // 쿼리, params, types 출력
-  echo "Sale ID: " . $_POST['saleId'] . "<br>";
-  echo "SN: " . $_POST['SN'] . "<br>";
-  echo "Vendor Name: " . $_POST['vendorName'] . "<br>"; // 추가된 부분: 거래처 이름
-  echo "SQL Query: " . $sql . "<br>";
-  echo "Params: ";
-  print_r($params);
-  echo "<br>";
-  echo "Types: " . $types . "<br>";
-
-  $stmt = $dbconnect->prepare($sql);
-
-  // SQL 에러 메시지 출력
-  if (!$stmt) {
-      die("SQL Statement Failed: " . $dbconnect->error);
-  }
-
-  $stmt->bind_param($types, ...$params);
-
-  if (!$stmt->execute()) {
-      $message = "검색 중 에러가 발생했습니다.";
-  } else {
-      $result = $stmt->get_result();
-      $searchResults = array();
-      while ($row = $result->fetch_assoc()) {
-          $searchResults[] = $row;
-      }
-      // 검색 결과가 없는 경우의 리다이렉션을 제거
-      if (empty($searchResults)) {
-          $message = "일치하는 데이터가 없습니다.";
-      } else {
-          // 검색 결과가 있는 경우에만 리다이렉션
-          $queryParameters = http_build_query($_POST);
-          header("Location: licenseMain.php?" . $queryParameters);
-          exit();
-      }
-  }
-}
-
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -182,7 +37,7 @@ WHERE 1=1";
         <div class="btn-cancel position-relative top-0">
           <button type="button" class="btn-close" aria-label="Close" onclick="redirectToLicenseMain()"></button>
         </div>
-        <form id="lcsSearchForm" method="post" action="licenseMain.php">
+        <form id="lcsSearchForm" method="get" action="licenseMain.php">
           <table class="inputTbl">
             <tr>
               <td><label for="saleId">명세서번호</label></td>
@@ -216,6 +71,19 @@ WHERE 1=1";
                   <option value="" <?php if (!isset($html_values['TYPE']) || empty($html_values['TYPE'])) echo 'selected'; ?>>선택안함</option>
                   <option value="유상" <?php if (isset($html_values['TYPE']) && $html_values['TYPE'] == '유상') echo 'selected'; ?>>유상</option>
                   <option value="무상" <?php if (isset($html_values['TYPE']) && $html_values['TYPE'] == '무상') echo 'selected'; ?>>무상</option>
+                </select>
+                <span class="error-message">&nbsp;</span>
+              </td>
+            </tr>
+            <tr>
+              <td><label for="manager">담당 엔지니어</label></td>
+              <td>
+                <select class="input short selectstyle" name="manager" id="manager">
+                  <option value="" <?php if (!isset($html_values['MANAGER']) || empty($html_values['MANAGER'])) echo 'selected'; ?>>선택안함</option>
+                  <option value="하진구" <?php if (isset($html_values['MANAGER']) && $html_values['MANAGER'] == '하진구') echo 'selected'; ?>>하진구</option>
+                  <option value="이재길" <?php if (isset($html_values['MANAGER']) && $html_values['MANAGER'] == '이재길') echo 'selected'; ?>>이재길</option>
+                  <option value="김두호" <?php if (isset($html_values['MANAGER']) && $html_values['MANAGER'] == '김두호') echo 'selected'; ?>>김두호</option>
+                  <option value="김두호" <?php if (isset($html_values['MANAGER']) && $html_values['MANAGER'] == '이시호') echo 'selected'; ?>>이시호</option>
                 </select>
                 <span class="error-message">&nbsp;</span>
               </td>

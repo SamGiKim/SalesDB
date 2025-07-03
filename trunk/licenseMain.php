@@ -219,35 +219,19 @@ switch ($from_url_path) {
         if (!isset($_GET["cmd"])) {
             goto DEFAULT_PAGE;
         }
-        
-        // 디버깅 정보 출력
-        // echo "<div style='background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc;'>";
-        // echo "Source: Dashboard<br>";
-        // echo "CMD: " . $_GET["cmd"] . "<br>";
-        
         $dashboard_result = get_sql_queried_from_dashboard($_GET["cmd"]);
         $query = $dashboard_result['sql'];
         $message = $dashboard_result['message'];
-        
-        // SQL 쿼리 출력
-        // echo "Query: " . htmlspecialchars($query) . "<br>";
-        
         // 쿼리 실행
         $result = mysqli_query($dbconnect, $query);
         if (!$result) {
             // echo "Query Error: " . mysqli_error($dbconnect) . "<br>";
         } else {
             $totalCount = mysqli_num_rows($result);
-            // echo "Result Count: " . $totalCount . "<br>";
         }
         echo "</div>";
         break;
-
     case "/sales/deviceMain.php":
-        // 디버깅 정보 출력
-        // echo "<div style='background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc;'>";
-        // echo "Source: DeviceMain<br>";
-        
         if (isset($_GET['SN'])) {
             $sn = mysqli_real_escape_string($dbconnect, $_GET['SN']);
             $query = "SELECT L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, 
@@ -259,60 +243,36 @@ switch ($from_url_path) {
                       ORDER BY L.SALE_ID DESC";
             
             $message = "SN으로 조회: " . $sn;
-            
-            // SQL 쿼리 출력
-            // echo "Query: " . htmlspecialchars($query) . "<br>";
-            
             // 쿼리 실행
             $result = mysqli_query($dbconnect, $query);
             if (!$result) {
                 echo "Query Error: " . mysqli_error($dbconnect) . "<br>";
             } else {
                 $totalCount = mysqli_num_rows($result);
-                // echo "Result Count: " . $totalCount . "<br>";
             }
         } else {
-            // echo "No SN parameter provided<br>";
             goto DEFAULT_PAGE;
         }
-        // echo "</div>";
         break;
-    
     // 테스트 코드
     case "/sales_test/dashboard.html":
     case "/sales_test/dashboard.php":
         if (!isset($_GET["cmd"])) {
             goto DEFAULT_PAGE;
         }
-        
-        // 디버깅 정보 출력
-        // echo "<div style='background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc;'>";
-        // echo "Source: Dashboard<br>";
-        // echo "CMD: " . $_GET["cmd"] . "<br>";
-        
         $dashboard_result = get_sql_queried_from_dashboard($_GET["cmd"]);
         $query = $dashboard_result['sql'];
         $message = $dashboard_result['message'];
-        
-        // SQL 쿼리 출력
-        // echo "Query: " . htmlspecialchars($query) . "<br>";
-        
         // 쿼리 실행
         $result = mysqli_query($dbconnect, $query);
         if (!$result) {
             // echo "Query Error: " . mysqli_error($dbconnect) . "<br>";
         } else {
             $totalCount = mysqli_num_rows($result);
-            // echo "Result Count: " . $totalCount . "<br>";
         }
         echo "</div>";
         break;
-
     case "/sales_test/deviceMain.php":
-        // 디버깅 정보 출력
-        // echo "<div style='background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc;'>";
-        // echo "Source: DeviceMain<br>";
-        
         if (isset($_GET['SN'])) {
             $sn = mysqli_real_escape_string($dbconnect, $_GET['SN']);
             $query = "SELECT L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, 
@@ -324,31 +284,19 @@ switch ($from_url_path) {
                       ORDER BY L.SALE_ID DESC";
             
             $message = "SN으로 조회: " . $sn;
-            
-            // SQL 쿼리 출력
-            // echo "Query: " . htmlspecialchars($query) . "<br>";
-            
             // 쿼리 실행
             $result = mysqli_query($dbconnect, $query);
             if (!$result) {
                 echo "Query Error: " . mysqli_error($dbconnect) . "<br>";
             } else {
                 $totalCount = mysqli_num_rows($result);
-                // echo "Result Count: " . $totalCount . "<br>";
             }
         } else {
-            // echo "No SN parameter provided<br>";
             goto DEFAULT_PAGE;
         }
-        // echo "</div>";
         break;
     default:
         DEFAULT_PAGE:
-        // 디버깅 정보 출력
-        // echo "<div style='background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc;'>";
-        // echo "Source: Default Page<br>";
-        // echo "Conditions: " . (!empty($conditions) ? implode(", ", $conditions) : "None") . "<br>";
-        
         $query = "SELECT 
             L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.WARRANTY, L.INSPECTION, L.SUPPORT, L.REF, V.NAME AS VENDOR_NAME
             FROM LICENSE AS L
@@ -361,28 +309,14 @@ switch ($from_url_path) {
         }
 
         $query .= " ORDER BY L.SALE_ID DESC";
-        
-        // SQL 쿼리 출력
-        // echo "Query: " . htmlspecialchars($query) . "<br>";
-        
         $result = mysqli_query($dbconnect, $query);
         if (!$result) {
             // echo "Query Error: " . mysqli_error($dbconnect) . "<br>";
         } else {
             $totalCount = mysqli_num_rows($result);
-            // echo "Result Count: " . $totalCount . "<br>";
         }
-        echo "</div>";
         break;
 }
-
-// HTTP_REFERER 정보 출력
-// echo "<div style='background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc;'>";
-// echo "HTTP_REFERER: " . (isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'Not set') . "<br>";
-// echo "from_url_path: " . $from_url_path . "<br>";
-// echo "Final Query: " . htmlspecialchars($query) . "<br>";
-// echo "Final Count: " . $totalCount . "<br>";
-// echo "</div>";
 
 // 결과 커서 리셋
 if ($result) {
@@ -423,25 +357,151 @@ if ($sale_ids) {
     }
 }
 
-// 결과 재설정 (원래대로 돌아가서 다시 사용 가능하게 함)
-mysqli_data_seek($result, 0);
+$searchMode = false;
+$searchConditions = [];
+$params = [];
+$types = '';
 
-// 1. 전체 데이터 개수 구하기
-$totalCount = get_count_from_dashboard($cmd);
-$totalPages = ceil($totalCount / $itemsPerPage);
+if (!empty($_GET['saleId'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.SALE_ID LIKE ?";
+    $params[] = "%" . $_GET['saleId'] . "%";
+    $types .= 's';
+}
+if (!empty($_GET['SN'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.SN LIKE ?";
+    $params[] = "%" . $_GET['SN'] . "%";
+    $types .= 's';
+}
+if (!empty($_GET['vendorName'])) {
+    $searchMode = true;
+    $searchConditions[] = "V.NAME LIKE ?";
+    $params[] = "%" . $_GET['vendorName'] . "%";
+    $types .= 's';
+}
+if (!empty($_GET['type'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.TYPE LIKE ?";
+    $params[] = "%" . $_GET['type'] . "%";
+    $types .= 's';
+}
+if (!empty($_GET['manager'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.MANAGER LIKE ?";
+    $params[] = "%" . $_GET['manager'] . "%";
+    $types .= 's';
+}
+if (!empty($_GET['sDateFrom']) && !empty($_GET['sDateTo'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.S_DATE BETWEEN ? AND ?";
+    $params[] = $_GET['sDateFrom'];
+    $params[] = $_GET['sDateTo'];
+    $types .= 'ss';
+} else if (!empty($_GET['sDateFrom'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.S_DATE >= ?";
+    $params[] = $_GET['sDateFrom'];
+    $types .= 's';
+} else if (!empty($_GET['sDateTo'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.S_DATE <= ?";
+    $params[] = $_GET['sDateTo'];
+    $types .= 's';
+}
+if (!empty($_GET['dDateFrom']) && !empty($_GET['dDateTo'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.D_DATE BETWEEN ? AND ?";
+    $params[] = $_GET['dDateFrom'];
+    $params[] = $_GET['dDateTo'];
+    $types .= 'ss';
+} else if (!empty($_GET['dDateFrom'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.D_DATE >= ?";
+    $params[] = $_GET['dDateFrom'];
+    $types .= 's';
+} else if (!empty($_GET['dDateTo'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.D_DATE <= ?";
+    $params[] = $_GET['dDateTo'];
+    $types .= 's';
+}
+if (!empty($_GET['type'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.TYPE LIKE ?";
+    $params[] = "%" . $_GET['type'] . "%";
+    $types .= 's';
+}
+if (!empty($_GET['inspection'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.INSPECTION LIKE ?";
+    $params[] = "%" . $_GET['inspection'] . "%";
+    $types .= 's';
+}
+if (!empty($_GET['support'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.SUPPORT LIKE ?";
+    $params[] = "%" . $_GET['support'] . "%";
+    $types .= 's';
+}
+if (!empty($_GET['ref'])) {
+    $searchMode = true;
+    $searchConditions[] = "L.REF LIKE ?";
+    $params[] = "%" . $_GET['ref'] . "%";
+    $types .= 's';
+}
 
-// 2. 오프셋 계산
-$offset = ($page - 1) * $itemsPerPage;
+if ($searchMode) {
+    $sqlCount = "SELECT COUNT(*) AS cnt
+                 FROM LICENSE AS L
+                 JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
+                 JOIN VENDOR AS V ON S.V_ID = V.V_ID
+                 WHERE " . implode(' AND ', $searchConditions);
 
-// 3. 페이징 포함 데이터 쿼리 생성
-$queryInfo = get_sql_queried_from_dashboard($cmd, $itemsPerPage, $offset);
-$query = $queryInfo['sql'];
-$message = $queryInfo['message'];
+    $stmt = $dbconnect->prepare($sqlCount);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $row = $res->fetch_assoc();
+    $totalCount = intval($row['cnt']);
+    $totalPages = ceil($totalCount / $itemsPerPage);
 
-// 4. 쿼리 실행
-$result = mysqli_query($dbconnect, $query);
-if (!$result) {
-    die("Query Failed: " . mysqli_error($dbconnect));
+    $offset = ($page - 1) * $itemsPerPage;
+    $sqlData = "SELECT L.*, V.NAME AS vendor_name
+                FROM LICENSE AS L
+                JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
+                JOIN VENDOR AS V ON S.V_ID = V.V_ID
+                WHERE " . implode(' AND ', $searchConditions) .
+            " LIMIT ? OFFSET ?";
+    $params[] = $itemsPerPage;
+    $params[] = $offset;
+    $types .= 'ii';
+
+    $stmt = $dbconnect->prepare($sqlData);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    // 결과 재설정 (원래대로 돌아가서 다시 사용 가능하게 함)
+    mysqli_data_seek($result, 0);
+
+    // 1. 전체 데이터 개수 구하기
+    $totalCount = get_count_from_dashboard($cmd);
+    $totalPages = ceil($totalCount / $itemsPerPage);
+
+    // 2. 오프셋 계산
+    $offset = ($page - 1) * $itemsPerPage;
+
+    // 3. 페이징 포함 데이터 쿼리 생성
+    $queryInfo = get_sql_queried_from_dashboard($cmd, $itemsPerPage, $offset);
+    $query = $queryInfo['sql'];
+    $message = $queryInfo['message'];
+
+    // 4. 쿼리 실행
+    $result = mysqli_query($dbconnect, $query);
+    if (!$result) {
+        die("Query Failed: " . mysqli_error($dbconnect));
+    }
 }
 ?>
 
