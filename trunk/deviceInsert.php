@@ -180,7 +180,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </td>
                         </tr>
                         <tr>
-                            <td><label for="ikind">인터페이스 유형</label></td>
+                            <td><label for="ikind">포트</label></td>
                             <td>
                                 <select class="input short selectstyle" name="ikind" id="ikind">
                                     <option value="" <?php echo isset($html_values['IKIND']) && $html_values['IKIND'] == '' ? 'selected' : ''; ?>>선택</option>
@@ -207,7 +207,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </td>
                         </tr>
                         <tr>
-                            <td><label for="capacity">대역폭</label></td>
+                            <td><label for="capacity">용량</label></td>
                             <td>
                                 <input type="text" class="input short" name="capacity" id="capacity">
                                 <span class="error-message">&nbsp;</span>

@@ -12,8 +12,6 @@ $SN = isset($_GET['SN']) ? $_GET['SN'] : '';
 $message = "전체 : ";
 // 한 페이지에 보여줄 아이템 수
 $itemsPerPage = 50;
-
-// 현재 페이지 번호 (GET 파라미터로 받음, 기본 1)
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($page < 1) $page = 1;
 
@@ -29,27 +27,68 @@ if (!empty($_GET)) {
 }
 
 $columnMap = [
-    "devType" => "DEV_TYPE",
     "SN" => "SN",
+    "orderNo" => "ORDER_NO",
+    "model" => "MODEL",
+    "FV" => "FV",
+    "devType" => "DEV_TYPE",
+    "interface" => "INTERFACE",
+    "ikind" => "IKIND",
+    "intNum" => "INTNUM",
+    "capacity" => "CAPACITY",
+    "HDD" => "HDD",
+    "memory" => "MEMORY",
 ];
 
 // WHERE 조건 배열 생성
 $conditions = [];
+if (!empty($_GET['SN'])) {
+    $searchConditions['SN'] = $_GET['SN'];
+}
+if (!empty($_GET['orderNo'])) {
+    $searchConditions['orderNo'] = $_GET['orderNo'];
+}
+if (!empty($_GET['model'])) {
+    $searchConditions['model'] = $_GET['model'];
+}
+if (!empty($_GET['FV'])) {
+    $searchConditions['FV'] = $_GET['FV'];
+}
+if (!empty($_GET['devType'])) {
+    $searchConditions['devType'] = $_GET['devType'];
+}
+if (!empty($_GET['interface'])) {
+    $searchConditions['interface'] = $_GET['interface'];
+}
+if (!empty($_GET['ikind'])) {
+    $searchConditions['ikind'] = $_GET['ikind'];
+}
+if (!empty($_GET['intNum'])) {
+    $searchConditions['intNum'] = $_GET['intNum'];
+}
+if (!empty($_GET['capacity'])) {
+    $searchConditions['capacity'] = $_GET['capacity'];
+}
+if (!empty($_GET['HDD'])) {
+    $searchConditions['HDD'] = $_GET['HDD'];
+}
+if (!empty($_GET['memory'])) {
+    $searchConditions['memory'] = $_GET['memory'];
+}
+
 foreach ($searchConditions as $key => $value) {
     if (!isset($columnMap[$key])) {
         continue;
     }
     $column = $columnMap[$key];
-    if ($key === "SN") {
-        // 정확히 일치하는 SN만 조회
+    if ($key === "SN" || $key === "model" || $key === "devType" || $key === "interface" 
+        || $key === "ikind" || $key === "HDD" || $key === "memory") {
+        // 정확히 일치하는 값
         $conditions[] = "D.$column = '" . mysqli_real_escape_string($dbconnect, $value) . "'";
-    } elseif ($key === "FV") {
+    } else  {
         $conditions[] = "D.$column LIKE '%" . mysqli_real_escape_string($dbconnect, $value) . "%'";
-    } else {
-        $conditions[] = "D.$column = '" . mysqli_real_escape_string($dbconnect, $value) . "'";
     }
 }
-
 
 // 총 데이터 건수 구하기 쿼리 (조건 반영)
 $countQuery = "SELECT COUNT(*) AS total FROM DEVICE D
@@ -89,8 +128,6 @@ if (!$result) {
     die("Query Failed: " . mysqli_error($dbconnect));
 }
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="ko">

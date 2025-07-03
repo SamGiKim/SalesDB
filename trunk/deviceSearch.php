@@ -20,123 +20,6 @@ function sanitize_input($input)
     global $dbconnect;
     return mysqli_real_escape_string($dbconnect, trim($input));
 }
-
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // 기본 쿼리
-    $query = "SELECT * FROM DEVICE WHERE 1=1";
-    $params = [];
-    $types = "";
-
-    // 각 필드에 대한 입력 검사 및 쿼리 업데이트
-    if (!empty($_POST["SN"])) {
-        $query .= " AND SN LIKE ?";
-        $params[] = "%" . sanitize_input($_POST["SN"]) . "%";
-        $types .= "s";
-    }
-
-    if (!empty($_POST["orderNo"])) {
-        $query .= " AND ORDER_NO LIKE ?";
-        $params[] = "%" . sanitize_input($_POST["orderNo"]) . "%";
-        $types .= "s";
-    }
-
-    if (!empty(trim($_POST["model"]))) {
-        $query .= " AND MODEL LIKE ?";
-        $params[] = "%" . trim($_POST["model"]) . "%";
-        $types .= "s";
-    }
-
-    if (!empty(trim($_POST["FV"]))) {
-        $query .= "AND FV LIKE ?";
-        $params[] = "%" . trim($_POST["FV"]) . "%";
-        $types .= "s";
-    }
-
-    if (!empty(trim($_POST["devType"]))) {
-        $query .= " AND DEV_TYPE LIKE ?";
-        $params[] = "%" . trim($_POST["devType"]) . "%";
-        $types .= "s";
-    }
-
-    if (!empty(trim($_POST["interface"]))) {
-        $query .= " AND INTERFACE LIKE ?";
-        $params[] = "%" . trim($_POST["interface"]) . "%";
-        $types .= "s";
-    }
-
-    if (!empty(trim($_POST["ikind"]))) {
-        $query .= " AND IKIND LIKE ?";
-        $params[] = "%" . trim($_POST["ikind"]) . "%";
-        $types .= "s";
-    }
-
-    if (!empty(trim($_POST["intNum"]))) {
-        $query .= " AND INTNUM = ?";
-        $params[] = trim($_POST["intNum"]);
-        $types .= "i";
-    }
-
-    if (!empty(trim($_POST["capacity"]))) {
-        $query .= " AND CAPACITY LIKE ?";
-        $params[] = "%" . trim($_POST["capacity"]) . "%";
-        $types .= "s";
-    }
-
-    if (!empty(trim($_POST["HDD"]))) {
-        $query .= " AND HDD LIKE ?";
-        $params[] = "%" . trim($_POST["HDD"]) . "%";
-        $types .= "s";
-    }
-
-    if (!empty(trim($_POST["memory"]))) {
-        $query .= " AND MEMORY LIKE ?";
-        $params[] = "%" . trim($_POST["memory"]) . "%";
-        $types .= "s";
-    }
-
-    // 모든 입력이 비어 있는지 확인
-    if (empty($types)) {
-        echo "<script>alert('적어도 하나 이상의 검색값을 입력해주세요.');</script>";
-    } else {
-        $stmt = mysqli_prepare($dbconnect, $query);
-        if (!$stmt) {
-            log_error("mysqli_prepare failed: " . mysqli_error($dbconnect));
-            exit();
-        }
-
-        mysqli_stmt_bind_param($stmt, $types, ...$params);
-
-        if (!mysqli_stmt_execute($stmt)) {
-            log_error("mysqli_stmt_execute failed: " . mysqli_stmt_error($stmt));
-            exit();
-        }
-
-        $result = mysqli_stmt_get_result($stmt);
-        if (!$result) {
-            log_error("mysqli_stmt_get_result failed: " . mysqli_error($dbconnect));
-            exit();
-        }
-
-        // 데이터베이스 결과가 있을 때
-        if (mysqli_num_rows($result) > 0) {
-            // GET 매개변수를 사용하여 쿼리 스트링 생성
-            $queryString = http_build_query($_GET);
-            // 에러 로그에 쿼리 스트링 기록
-            error_log("리다이렉트될 URL: deviceMain.php?" . $queryString);
-            // 사용자를 deviceMain.php로 리다이렉트하고 쿼리 스트링을 전달
-            header("Location: deviceMain.php?" . $queryString);
-        }
-        // 데이터베이스 결과가 없을 때
-        else {
-            // GET 매개변수를 사용하여 쿼리 스트링 생성
-            $queryString = http_build_query($_GET);
-            // 에러 로그에 쿼리 스트링 기록
-            error_log("쿼리 결과가 없습니다. 쿼리 스트링: " . $queryString);
-            // 해당되는 장비를 찾을 수 없다는 경고 메시지 출력
-            echo "<script>alert('해당되는 장비를 찾을 수 없습니다.');</script>";
-        }
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -186,8 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <td><label for="model">모델명</label></td>
                             <td>
                                 <select class="input short selectstyle" name="model" id="model">
-                                    <!-- 옵션들 -->
-                                    <option value="" <?php echo isset($html_values['MODEL']) && $html_values['MODEL'] == '' ? 'selected' : ''; ?>>선택</option>
+                                    <option value="" <?php echo isset($html_values['MODEL']) && $html_values['MODEL'] == '' ? 'selected' : ''; ?>>선택안함</option>
                                     <option value="10000Q" <?php echo isset($html_values['MODEL']) && $html_values['MODEL'] == '10000Q' ? 'selected' : ''; ?>>10000Q</option>
                                     <option value="10002Q" <?php echo isset($html_values['MODEL']) && $html_values['MODEL'] == '10002Q' ? 'selected' : ''; ?>>10002Q</option>
                                     <option value="4500Q" <?php echo isset($html_values['MODEL']) && $html_values['MODEL'] == '4500Q' ? 'selected' : ''; ?>>4500Q</option>
@@ -222,7 +104,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <td><label for="devType">장비유형</label></td>
                             <td>
                                 <select class="input short selectstyle" name="devType" id="devType">
-                                    <option value="" <?php echo isset($html_values['DEV_TYPE']) && $html_values['DEV_TYPE'] == '' ? 'selected' : ''; ?>>선택</option>
+                                    <option value="" <?php echo isset($html_values['DEV_TYPE']) && $html_values['DEV_TYPE'] == '' ? 'selected' : ''; ?>>선택안함</option>
                                     <option value="J201" <?php echo isset($html_values['DEV_TYPE']) && $html_values['DEV_TYPE'] == 'J201' ? 'selected' : ''; ?>>J201</option>
                                     <option value="D307" <?php echo isset($html_values['DEV_TYPE']) && $html_values['DEV_TYPE'] == 'D307' ? 'selected' : ''; ?>>D307</option>
                                     <option value="2052" <?php echo isset($html_values['DEV_TYPE']) && $html_values['DEV_TYPE'] == '2052' ? 'selected' : ''; ?>>2052</option>
@@ -247,7 +129,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <td><label for="interface">인터페이스</label></td>
                             <td>
                                 <select class="input short selectstyle" name="interface" id="interface">
-                                    <option value="" <?php echo isset($html_values['INTERFACE']) && $html_values['INTERFACE'] == '' ? 'selected' : ''; ?>>선택</option>
+                                    <option value="" <?php echo isset($html_values['INTERFACE']) && $html_values['INTERFACE'] == '' ? 'selected' : ''; ?>>선택안함</option>
                                     <option value="1G" <?php echo isset($html_values['INTERFACE']) && $html_values['INTERFACE'] == '1G' ? 'selected' : ''; ?>>1G</option>
                                     <option value="10G" <?php echo isset($html_values['INTERFACE']) && $html_values['INTERFACE'] == '10G' ? 'selected' : ''; ?>>10G</option>
                                     <option value="1G/10G" <?php echo isset($html_values['INTERFACE']) && $html_values['INTERFACE'] == '1G/10G' ? 'selected' : ''; ?>>1G/10G</option>
@@ -256,10 +138,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             </td>
                         </tr>
                         <tr>
-                            <td><label for="ikind">인터페이스 유형</label></td>
+                            <td><label for="ikind">포트</label></td>
                             <td>
                                 <select class="input short selectstyle" name="ikind" id="ikind">
-                                    <option value="" <?php echo isset($html_values['IKIND']) && $html_values['IKIND'] == '' ? 'selected' : ''; ?>>선택</option>
+                                    <option value="" <?php echo isset($html_values['IKIND']) && $html_values['IKIND'] == '' ? 'selected' : ''; ?>>선택안함</option>
                                     <option value="Copper" <?php echo isset($html_values['IKIND']) && $html_values['IKIND'] == 'Copper' ? 'selected' : ''; ?>>Copper</option>
                                     <option value="F/C" <?php echo isset($html_values['IKIND']) && $html_values['IKIND'] == 'F/C' ? 'selected' : ''; ?>>F/C</option>
                                     <option value="Fiber" <?php echo isset($html_values['IKIND']) && $html_values['IKIND'] == 'Fiber' ? 'selected' : ''; ?>>Fiber</option>
@@ -276,7 +158,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             </td>
                         </tr>
                         <tr>
-                            <td><label for="capacity">대역폭</label></td>
+                            <td><label for="capacity">용량</label></td>
                             <td>
                                 <input type="text" class="input short" name="capacity" id="capacity">
                                 <span class="error-message">&nbsp;</span>
@@ -286,7 +168,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <td><label for="HDD">디스크</label></td>
                             <td>
                                 <select class="input short selectstyle" name="HDD" id="HDD">
-                                    <option value="" <?php echo isset($html_values['DEV_TYPE']) && $html_values['DEV_TYPE'] == '' ? 'selected' : ''; ?>>선택</option>
+                                    <option value="" <?php echo isset($html_values['DEV_TYPE']) && $html_values['DEV_TYPE'] == '' ? 'selected' : ''; ?>>선택안함</option>
                                     <option value="500G" <?php echo isset($html_values['DEV_TYPE']) && $html_values['DEV_TYPE'] == '500G' ? 'selected' : ''; ?>>500G</option>
                                     <option value="1TB" <?php echo isset($html_values['DEV_TYPE']) && $html_values['DEV_TYPE'] == '1T' ? 'selected' : ''; ?>>1T</option>
                                     <option value="2TB X 1(EA)" <?php echo isset($html_values['DEV_TYPE']) && $html_values['DEV_TYPE'] == '2TB X 1(EA)' ? 'selected' : ''; ?>>2TB X 1(EA)</option>
@@ -301,7 +183,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <td><label for="memory">메모리</label></td>
                             <td>
                                 <select class="input short selectstyle" name="memory" id="memory">
-                                    <option value="" <?php echo isset($html_values['MEMORY']) && $html_values['MEMORY'] == '' ? 'selected' : ''; ?>>선택</option>
+                                    <option value="" <?php echo isset($html_values['MEMORY']) && $html_values['MEMORY'] == '' ? 'selected' : ''; ?>>선택안함</option>
                                     <option value="4G" <?php echo isset($html_values['MEMORY']) && $html_values['MEMORY'] == '4G' ? 'selected' : ''; ?>>4G</option>
                                     <option value="8G" <?php echo isset($html_values['MEMORY']) && $html_values['MEMORY'] == '8G' ? 'selected' : ''; ?>>8G</option>
                                     <option value="16G" <?php echo isset($html_values['MEMORY']) && $html_values['MEMORY'] == '16G' ? 'selected' : ''; ?>>16G</option>
