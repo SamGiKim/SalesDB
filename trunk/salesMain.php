@@ -400,6 +400,7 @@ $stmt->close();
             <div class="col-12 d-flex justify-content-start main-top-btn">
                 <button type="button" class="btn btn-primary insert mr-2" onclick="goToSalesInsert()">신규</button>
                 <button type="button" class="btn btn-primary search" onclick="goToSalesSearch()">검색</button>
+                <button type="button" class="btn btn-primary" onclick="window.location.href='export_sales_csv.php'">CSV</button>
             </div>
             <div class="total-number" style="text-align:left; margin-left:2%; font-size: 1.2em; font-weight:bold;">
                 <?= $message ?><span> </span><?= $totalCount ?> 건
