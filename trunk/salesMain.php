@@ -19,11 +19,9 @@ require_once "sales_db.php";
 mysqli_set_charset($dbconnect, "utf8");
 
 // 가격 볼수 있는 권한 제한(LOGIN 테이블의 permission열이 admin이나 sales 이고 IP가 내부일때만  TOT_PRICE 볼 수 있다.)
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 사용자 권한 확인
 $userPermission = ''; //기본값 설정
 $isExternalAccess = false; // 기본적으로 내부 액세스로 설정
-
 if (isset($_SESSION['user_id'])) {
     $userId = $_SESSION['user_id'];
     $permissionQuery = "SELECT permission FROM LOGIN WHERE user_id=?";
@@ -41,16 +39,12 @@ if (isset($_SESSION['user_id'])) {
 if (substr($_SERVER['REMOTE_ADDR'], 0, 3) !== '192') {
     $isExternalAccess = true;
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $today = date("Y-m-d");
 $message = "전체 : ";
 $sortBy = 'SALE_ID'; // 기본 정렬 기준
 $receivedSN = null; // 또는 적절한 값
 $receivedSaleID = null; // 또는 적절한 값
 $receivedOrderNo = null; // 또는 적절한 값
-
-// selectSales 함수를 사용하여 필요한 조건을 적용한 SQL 쿼리를 생성
-// $sql = selectSales($sortBy, $receivedSN, $receivedSaleID, $receivedOrderNo);
 
 //dashboard_search_result.php 에서 받은 sale_ids
 if (isset($_GET['sale_ids'])) {
@@ -60,73 +54,53 @@ if (isset($_GET['sale_ids'])) {
 }
 
 $action = $_GET['action'] ?? "";  // PHP 7 이후의 null coalescing operator를 사용
-
 //deviceMain.php, licenseMain.php에서 받은SN, SALE_ID, ORDER_NO를 링크로(GET) 클릭해서 받아와서 td에 넣어주기 
 $receivedSN = isset($_GET['SN']) ? $_GET['SN'] : null;
 $receivedSaleID = isset($_GET['SALE_ID']) ? $_GET['SALE_ID'] : null;
 $receivedOrderNo = isset($_GET['ORDER_NO']) ? $_GET['ORDER_NO'] : null;
 
+function selectSales($sortBy, $receivedSN = null, $receivedSaleID = null, $receivedOrderNo = null) {
+    global $dbconnect; 
+    $sql = "SELECT s.SALE_ID as SALE_ID, 
+                v.NAME as V_NAME, 
+                c.NAME as C_NAME, 
+                cbiz.NAME as CBIZ_NAME, 
+                b.NAME as BIZ_NAME, 
+                s.TOT_PRICE as TOT_PRICE, 
+                s.DELIVER_DATE as DELIVER_DATE, 
+                s.S_DATE as S_DATE, 
+                s.D_DATE as D_DATE, 
+                s.WARRANTY as WARRANTY, 
+                s.ORDER_NO as ORDER_NO, 
+                s.REF as REF, 
+                GROUP_CONCAT(d.SN) as SN_LIST 
+            FROM SALES as s
+            LEFT JOIN VENDOR AS v ON s.V_ID = v.V_ID
+            LEFT JOIN CUSTOMER AS c ON s.C_ID = c.C_ID
+            LEFT JOIN CUSTOMER AS cbiz ON s.CBIZ_ID = cbiz.C_ID
+            LEFT JOIN BUSINESS AS b ON s.BIZ_ID = b.BIZ_ID
+            LEFT JOIN DEVICE AS d ON s.ORDER_NO = d.ORDER_NO";
 
-function selectSales($sortBy, $receivedSN = null, $receivedSaleID = null, $receivedOrderNo = null)
-{
-    $sql =  "SELECT s.SALE_ID as SALE_ID, ";
-    $sql .= "v.NAME as V_NAME, ";
-    $sql .= "c.NAME as C_NAME, ";
-    $sql .= "cbiz.NAME as CBIZ_NAME, ";
-    $sql .= "b.NAME as BIZ_NAME, ";
-    $sql .= "s.TOT_PRICE as TOT_PRICE, ";
-    $sql .= "s.DELIVER_DATE as DELIVER_DATE, ";
-    $sql .= "s.S_DATE as S_DATE, ";
-    $sql .= "s.D_DATE as D_DATE, ";
-    $sql .= "s.WARRANTY as WARRANTY, ";
-    $sql .= "s.ORDER_NO as ORDER_NO, ";
-    $sql .= "s.REF as REF, ";
-    $sql .= "GROUP_CONCAT(d.SN) as SN_LIST ";
-    $sql .= "FROM SALES as s ";
-    $sql .= "LEFT JOIN VENDOR AS v ON s.V_ID = v.V_ID ";
-    $sql .= "LEFT JOIN CUSTOMER AS c ON s.C_ID = c.C_ID ";
-    $sql .= "LEFT JOIN CUSTOMER AS cbiz ON s.CBIZ_ID = cbiz.C_ID ";
-    $sql .= "LEFT JOIN BUSINESS AS b ON s.BIZ_ID = b.BIZ_ID ";
-    $sql .= "LEFT JOIN DEVICE AS d ON s.ORDER_NO = d.ORDER_NO ";  // 주석 해제
-
-    $conditions = [];
-
-    if (!is_null($receivedSN) && !is_array($receivedSN)) {
-        $receivedSN = [$receivedSN];
+    if (!empty($receivedSN)) {
+        $sn = mysqli_real_escape_string($dbconnect, $receivedSN);
+        $sql .= " WHERE d.SN = '$sn'";
+    } elseif (!empty($receivedSaleID)) {
+        $saleId = mysqli_real_escape_string($dbconnect, $receivedSaleID);
+        $sql .= " WHERE s.SALE_ID = '$saleId'";
+    } elseif (!empty($receivedOrderNo)) {
+        $orderNo = mysqli_real_escape_string($dbconnect, $receivedOrderNo);
+        $sql .= " WHERE s.ORDER_NO = '$orderNo'";
     }
-    if (!is_null($receivedSaleID) && !is_array($receivedSaleID)) {
-        $receivedSaleID = [$receivedSaleID];
-    }
-    if (!is_null($receivedSN) && is_array($receivedSN)) {
-        $snValues = implode(',', array_map(function ($value) {
-            return "'$value'";
-        }, $receivedSN));
-        $conditions[] = "d.SN IN ($snValues)";
-    }
-    if (!is_null($receivedSaleID) && is_array($receivedSaleID)) {
-        $saleIdValues = implode(',', array_map(function ($value) {
-            return "'$value'";
-        }, $receivedSaleID));
-        $conditions[] = "s.SALE_ID IN ($saleIdValues)";
-    }
-    if (!is_null($receivedOrderNo)) {
-        $conditions[] = "s.ORDER_NO = '$receivedOrderNo'";
-    }
-    if (!empty($conditions)) {
-        $sql .= " WHERE " . implode(' AND ', $conditions);
-    }
-    $sql .= " GROUP BY s.SALE_ID ";  // SALE_ID 기준으로 그룹화
-    $sql .= " ORDER BY $sortBy DESC";
+    $sql .= " GROUP BY s.SALE_ID";
+    $sql .= " ORDER BY " . mysqli_real_escape_string($dbconnect, $sortBy) . " DESC";
     return $sql;
 }
 
 //EOS 처리함수
-function handleEosQuery($eos_start_date, $eos_end_date, $dbconnect)
-{
+function handleEosQuery($eos_start_date, $eos_end_date, $dbconnect) {
     if (empty($eos_start_date) || empty($eos_end_date)) {
         return ['dateCount' => 0, 'salesData' => []];
     }
-
     // Count query - D_DATE를 DELIVER_DATE로 변경
     $sqlForDate = "SELECT COUNT(*) as cnt FROM SALES WHERE DELIVER_DATE BETWEEN ? AND ?";
     $stmt = $dbconnect->prepare($sqlForDate);
@@ -189,7 +163,7 @@ if (isset($_GET['condition']) && $_GET['condition'] == 'eos') {
     $response = handleEosQuery($_GET['eos_start_date'] ?? null, $_GET['eos_end_date'] ?? null, $dbconnect);
     $totalCount = $response['dateCount'];
 
-    // case2. sale_ids는 대시보드에서 통합검색 했을때 필터링해서 보여주는 것.
+    // case 2. sale_ids는 대시보드에서 통합검색 했을때 필터링해서 보여주는 것.
 } // 필터가 있는 경우
 else if (isset($_GET['sale_ids']) && $_GET['sale_ids'] != '') {
     $saleIdsFilter = explode(',', $_GET['sale_ids']);
@@ -205,7 +179,7 @@ else if (isset($_GET['sale_ids']) && $_GET['sale_ids'] != '') {
     }
     $stmt->close();
 }
-// case 4. deviceMain.php, licenseMain.php의 SN, ORDER_NO, SALE_ID를 통해 들 유입
+// case 3. deviceMain.php, licenseMain.php의 SN, ORDER_NO, SALE_ID를 통해 들 유입
 else {
     $sortBy = $_GET['sort'] ?? 'SALE_ID'; // 기본 정렬 기준
     $sql = selectSales($sortBy, $receivedSN, $receivedSaleID, $receivedOrderNo);
@@ -239,7 +213,7 @@ if (isset($_GET['condition']) && $_GET['condition'] === 'eos') {
     }
 }
 // sale_ids 조건 (콤마로 구분된 SALE_ID 리스트)
-elseif (isset($_GET['sale_ids']) && !empty($_GET['sale_ids'])) {
+if (isset($_GET['sale_ids']) && !empty($_GET['sale_ids'])) {
     $saleIds = explode(',', $_GET['sale_ids']);
     // 동적 개수의 ? 와 타입 s 추가
     $inClause = implode(',', array_fill(0, count($saleIds), '?'));
@@ -250,6 +224,21 @@ elseif (isset($_GET['sale_ids']) && !empty($_GET['sale_ids'])) {
     }
 }
 
+if (!empty($receivedSN)) {
+    $where .= " AND D.SN LIKE ? ";
+    $params[] = "%$receivedSN%";
+    $types .= "s";
+}
+if (!empty($receivedSaleID)) {
+    $where .= " AND S.SALE_ID LIKE ? ";
+    $params[] = "%$receivedSaleID%";
+    $types .= "s";
+}
+if (!empty($receivedOrderNo)) {
+    $where .= " AND S.ORDER_NO LIKE ? ";
+    $params[] = "%$receivedOrderNo%";
+    $types .= "s";
+}
 // 검색 조건
 if (!empty($_GET['saleId'])) {
     $where .= " AND S.SALE_ID LIKE ? ";
@@ -584,7 +573,7 @@ $stmt->close();
                             $nextUrl = '?' . http_build_query($queryParams);
                             echo "<a href='" . htmlspecialchars($nextUrl) . "' class='btn btn-outline-primary ms-2'>다음</a>";
                         }
-                        ?>
+                        ?> 
                     </div>
                 </div>
             </div>
