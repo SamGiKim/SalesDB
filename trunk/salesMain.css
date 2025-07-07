@@ -244,6 +244,9 @@ input[disabled] {
     background-color:#FF6B6B;
     margin-right: 5px;
 }
+.search{
+    margin-right: 5px;
+}
 .btn{
     height: 50px;
     width: 80px;
