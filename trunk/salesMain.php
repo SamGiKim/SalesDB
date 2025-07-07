@@ -270,15 +270,39 @@ if (!empty($_GET['deliverDate'])) {
     $params[] = $_GET['deliverDate'];
     $types .= "s";
 }
-if (!empty($_GET['sDate'])) {
-    $where .= " AND S.S_DATE = ? ";
-    $params[] = $_GET['sDate'];
-    $types .= "s";
+if (!empty($_GET['sDateFrom']) && !empty($_GET['sDateTo'])) {
+    $searchMode = true;
+    $searchConditions[] = "S.S_DATE BETWEEN ? AND ?";
+    $params[] = $_GET['sDateFrom'];
+    $params[] = $_GET['sDateTo'];
+    $types .= 'ss';
+} else if (!empty($_GET['sDateFrom'])) {
+    $searchMode = true;
+    $searchConditions[] = "S.S_DATE >= ?";
+    $params[] = $_GET['sDateFrom'];
+    $types .= 's';
+} else if (!empty($_GET['sDateTo'])) {
+    $searchMode = true;
+    $searchConditions[] = "S.S_DATE <= ?";
+    $params[] = $_GET['sDateTo'];
+    $types .= 's';
 }
-if (!empty($_GET['dDate'])) {
-    $where .= " AND S.D_DATE = ? ";
-    $params[] = $_GET['dDate'];
-    $types .= "s";
+if (!empty($_GET['dDateFrom']) && !empty($_GET['dDateTo'])) {
+    $searchMode = true;
+    $searchConditions[] = "S.D_DATE BETWEEN ? AND ?";
+    $params[] = $_GET['dDateFrom'];
+    $params[] = $_GET['dDateTo'];
+    $types .= 'ss';
+} else if (!empty($_GET['dDateFrom'])) {
+    $searchMode = true;
+    $searchConditions[] = "S.D_DATE >= ?";
+    $params[] = $_GET['dDateFrom'];
+    $types .= 's';
+} else if (!empty($_GET['dDateTo'])) {
+    $searchMode = true;
+    $searchConditions[] = "S.D_DATE <= ?";
+    $params[] = $_GET['dDateTo'];
+    $types .= 's';
 }
 if (!empty($_GET['orderNo'])) {
     $where .= " AND S.ORDER_NO LIKE ? ";
@@ -375,6 +399,12 @@ $stmt->close();
             var url = 'deviceMain.php?SN=' + encodeURIComponent(DEVICE_SN) + '&SALE_ID=' + encodeURIComponent(SALE_ID);
             window.location.href = url;
         }
+        function downloadFilteredCsv() {
+            const currentUrl = window.location.href;
+            const url = new URL(currentUrl);
+            const params = url.search;
+            window.location.href = 'export_sales_filter_csv.php' + params;
+        }
     </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
 </head>
@@ -390,7 +420,7 @@ $stmt->close();
                 <button type="button" class="btn btn-primary insert mr-2" onclick="goToSalesInsert()">신규</button>
                 <button type="button" class="btn btn-primary search" onclick="goToSalesSearch()">검색</button>
                 <button type="button" class="btn-primary csv" onclick="window.location.href='export_sales_csv.php'">전체 CSV</button>
-                <button type="button" class="btn-primary csv" onclick="window.location.href='export_sales_filter_csv.php'">현재 CSV</button>
+                <button type="button" class="btn-primary csv" onclick="downloadFilteredCsv()">검색 CSV</button>
             </div>
             <div class="total-number" style="text-align:left; margin-left:2%; font-size: 1.2em; font-weight:bold;">
                 <?= $message ?><span> </span><?= $totalCount ?> 건

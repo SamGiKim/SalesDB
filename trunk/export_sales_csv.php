@@ -13,23 +13,23 @@ echo "\xEF\xBB\xBF";
 // DB 조회
 $sql = "
 SELECT 
-    s.SALE_ID,
-    v.NAME AS V_NAME,
-    c.NAME AS C_NAME,
-    cb.NAME AS CBIZ_NAME,
-    b.NAME AS BIZ_NAME,
-    s.TOT_PRICE,
-    s.DELIVER_DATE,
-    s.S_DATE,
-    s.D_DATE,
-    s.ORDER_NO,
-    s.WARRANTY
-FROM SALES s
-LEFT JOIN VENDOR v ON s.V_ID = v.V_ID
-LEFT JOIN CUSTOMER c ON s.C_ID = c.C_ID
-LEFT JOIN CUSTOMER cb ON s.CBIZ_ID = cb.C_ID
-LEFT JOIN BUSINESS b ON s.BIZ_ID = b.BIZ_ID
-ORDER BY s.SALE_ID DESC
+    S.SALE_ID,
+    V.NAME AS V_NAME,
+    C.NAME AS C_NAME,
+    CBIZ.NAME AS CBIZ_NAME,
+    B.NAME AS BIZ_NAME,
+    S.TOT_PRICE,
+    S.DELIVER_DATE,
+    S.S_DATE,
+    S.D_DATE,
+    S.ORDER_NO,
+    S.WARRANTY
+FROM SALES S
+LEFT JOIN VENDOR V ON S.V_ID = V.V_ID
+LEFT JOIN CUSTOMER C ON S.C_ID = C.C_ID
+LEFT JOIN CUSTOMER CBIZ ON S.CBIZ_ID = CBIZ.C_ID
+LEFT JOIN BUSINESS B ON S.BIZ_ID = B.BIZ_ID
+ORDER BY S.SALE_ID DESC
 ";
 
 $result = mysqli_query($dbconnect, $sql) or die('Query error: ' . mysqli_error($dbconnect));

@@ -63,9 +63,9 @@ mysqli_set_charset($dbconnect, "utf8");
                             </td>
                         </tr>
                         <tr>
-                            <td><label for="pbizName">거래처영업</label></td>
+                            <td><label for="cbizName">거래처영업</label></td>
                             <td>
-                                <input type="text" class="input" name="pbizName" id="pbizName">
+                                <input type="text" class="input" name="cbizName" id="cbizName">
                                 <span class="error-message">&nbsp;</span>
                             </td>
                         </tr>
@@ -79,7 +79,6 @@ mysqli_set_charset($dbconnect, "utf8");
                         <tr>
                             <td><label for="deliverDate">납품일</label></td>
                             <td>
-                                <!-- Input for start date -->
                                 <input type="date" class="input short" name="deliverDate" id="deliverDate">
                                 <span class="error-message">&nbsp;</span>
                             </td>
@@ -87,16 +86,18 @@ mysqli_set_charset($dbconnect, "utf8");
                         <tr>
                             <td><label for="sDate">유지보수 시작일</label></td>
                             <td>
-                                <!-- Input for start date -->
-                                <input type="date" class="input short" name="sDate" id="sDate">
+                                <input type="date" class="input short" name="sDateFrom" id="sDateFrom">
+                                <span>~</span>
+                                <input type="date" class="input short" name="sDateTo" id="sDateTo">
                                 <span class="error-message">&nbsp;</span>
                             </td>
                         </tr>
                         <tr>
                             <td><label for="dDate">유지보수 종료일</label></td>
                             <td>
-                                <!-- Input for start date -->
-                                <input type="date" class="input short" name="dDate" id="dDate">
+                                <input type="date" class="input short" name="dDateFrom" id="dDateFrom">
+                                <span>~</span>
+                                <input type="date" class="input short" name="dDateTo" id="dDateTo">
                                 <span class="error-message">&nbsp;</span>
                             </td>
                         </tr>

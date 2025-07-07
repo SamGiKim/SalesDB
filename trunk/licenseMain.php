@@ -13,7 +13,7 @@ mysqli_set_charset($dbconnect, "utf8");
 
 $today = date("Y-m-d");
 $message = "전체 : ";
-
+$action = $_GET['action'] ?? "";
 $itemsPerPage = 50;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? intval($_GET['page']) : 1;
 $cmd = isset($_GET['cmd']) ? $_GET['cmd'] : '';
@@ -540,6 +540,14 @@ if ($searchMode) {
             text-align: left;
         }
     </style>
+    <script>
+        function downloadFilteredCsv() {
+            const currentUrl = window.location.href;
+            const url = new URL(currentUrl);
+            const params = url.search;
+            window.location.href = 'export_license_filter_csv.php' + params;
+        }
+    </script>
 </head>
 
 <body>
@@ -554,6 +562,8 @@ if ($searchMode) {
             <div class="col-12 d-flex justify-content-start main-top-btn">
                 <button type="button" class="btn btn-primary insert mr-2" onclick="goToLicenseInsert()">신규</button>
                 <button type="button" class="btn btn-primary search" onclick="goToLicenseSearch()">검색</button>
+                <button type="button" class="btn-primary csv" onclick="window.location.href='export_license_csv.php'">전체 CSV</button>
+                <button type="button" class="btn-primary csv" onclick="downloadFilteredCsv()">검색 CSV</button>
             </div>
             <!-- >>>>>> 230920 총 건수 -->
             <div class="total-number" style="text-align:left; margin-left:2%; font-size: 1.2em; font-weight:bold;">
