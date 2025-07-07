@@ -255,8 +255,15 @@ input[disabled] {
     height: 50px;
     width: 100px;
     margin-right: 5px;
+    background-color:#009900;
+    letter-spacing: 2px;
+    text-align: center;
+    border:none !important;
+    font-weight: bold;
 }
 .btn{
+    height: 50px;
+    width: 80px;
     letter-spacing: 2px;
     text-align: center;
     border:none !important;
