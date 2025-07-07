@@ -30,7 +30,7 @@ mysqli_set_charset($dbconnect, "utf8");
 
 //로그인 폼 데이터 처리
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['user_id']) && isset($_POST['password'])) {
-    var_dump($_POST);
+    // var_dump($_POST);
     $user_id = mysqli_real_escape_string($dbconnect, $_POST['user_id']);
     $pw = mysqli_real_escape_string($dbconnect, $_POST['password']);
     // 준비된 명령문 사용하여 SQL 인젝션 방지

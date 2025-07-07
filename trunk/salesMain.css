@@ -241,15 +241,22 @@ input[disabled] {
     text-align: center;
 }
 .insert{
+    height: 50px;
+    width: 80px;
     background-color:#FF6B6B;
     margin-right: 5px;
 }
 .search{
+    height: 50px;
+    width: 80px;
+    margin-right: 5px;
+}
+.csv{
+    height: 50px;
+    width: 100px;
     margin-right: 5px;
 }
 .btn{
-    height: 50px;
-    width: 80px;
     letter-spacing: 2px;
     text-align: center;
     border:none !important;
