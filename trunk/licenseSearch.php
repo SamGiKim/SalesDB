@@ -37,7 +37,10 @@ mysqli_set_charset($dbconnect, "utf8");
         <div class="btn-cancel position-relative top-0">
           <button type="button" class="btn-close" aria-label="Close" onclick="redirectToLicenseMain()"></button>
         </div>
-        <form id="lcsSearchForm" method="get" action="licenseMain.php">
+        <form
+          id="lcsSearchForm"
+          method="get"
+          action="licenseMain.php">
           <table class="inputTbl">
             <tr>
               <td><label for="saleId">명세서번호</label></td>

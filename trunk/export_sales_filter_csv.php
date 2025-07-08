@@ -14,7 +14,6 @@ echo "\xEF\xBB\xBF";
 $deviceSaleId = $_GET['SALE_ID'] ?? null; // deviceMain에서 넘어온 SALE_ID
 $orderNo = $_GET['ORDER_NO'] ?? null;
 $sn = $_GET['SN'] ?? null;
-$action = $_GET['action'] ?? null;
 $searchSaleId = $_GET['saleId'] ?? null; // salesSearch에서 넘어온 SALE_ID
 $vName = $_GET['vName'] ?? null;
 $cName = $_GET['cName'] ?? null;
