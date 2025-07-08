@@ -21,8 +21,10 @@ $cName = $_GET['cName'] ?? null;
 $cbizName = $_GET['cbizName'] ?? null;
 $bizName = $_GET['bizName'] ?? null;
 $deliverDate = $_GET['deliverDate']?? null;
-$sDate = $_GET['sDate'] ?? null;
-$dDate = $_GET['dDate'] ?? null;
+$sDateFrom = $_GET['sDateFrom'] ?? null;
+$sDateTo = $_GET['sDateTo'] ?? null;
+$dDateFrom = $_GET['dDateFrom'] ?? null;
+$dDateTo = $_GET['dDateTo'] ?? null;
 $ref = $_GET['ref'] ?? null;
 
 $where = [];
@@ -58,11 +60,19 @@ if ($action === 'search') {
     if ($deliverDate) {
         $where[] = "s.DELIVER_DATE = '" . mysqli_real_escape_string($dbconnect, $deliverDate) . "'";
     }
-    if ($sDate) {
-        $where[] = "s.S_DATE = '" . mysqli_real_escape_string($dbconnect, $sDate) . "'";
+    if ($sDateFrom && $sDateTo) {
+        $where[] = "s.S_DATE BETWEEN '" . mysqli_real_escape_string($dbconnect, $sDateFrom) . "' AND '" . mysqli_real_escape_string($dbconnect, $sDateTo) . "'";
+    } else if ($sDateFrom) {
+        $where[] = "s.S_DATE >= '" . mysqli_real_escape_string($dbconnect, $sDateFrom) . "'";
+    } else if ($sDateTo) {
+        $where[] = "s.S_DATE <= '" . mysqli_real_escape_string($dbconnect, $sDateTo) . "'";
     }
-    if ($dDate) {
-        $where[] = "s.D_DATE = '" . mysqli_real_escape_string($dbconnect, $dDate) . "'";
+    if ($dDateFrom && $dDateTo) {
+        $where[] = "s.D_DATE BETWEEN '" . mysqli_real_escape_string($dbconnect, $dDateFrom) . "' AND '" . mysqli_real_escape_string($dbconnect, $dDateTo) . "'";
+    } else if ($dDateFrom) {
+        $where[] = "s.D_DATE >= '" . mysqli_real_escape_string($dbconnect, $dDateFrom) . "'";
+    } else if ($dDateTo) {
+        $where[] = "s.D_DATE <= '" . mysqli_real_escape_string($dbconnect, $dDateTo) . "'";
     }
     if ($ref) {
         $where[] = "s.REF LIKE '%" . mysqli_real_escape_string($dbconnect, $ref) . "%'";

@@ -271,36 +271,30 @@ if (!empty($_GET['deliverDate'])) {
     $types .= "s";
 }
 if (!empty($_GET['sDateFrom']) && !empty($_GET['sDateTo'])) {
-    $searchMode = true;
-    $searchConditions[] = "S.S_DATE BETWEEN ? AND ?";
+    $where .= " AND S.S_DATE BETWEEN ? AND ?";
     $params[] = $_GET['sDateFrom'];
     $params[] = $_GET['sDateTo'];
     $types .= 'ss';
 } else if (!empty($_GET['sDateFrom'])) {
-    $searchMode = true;
-    $searchConditions[] = "S.S_DATE >= ?";
+    $where .= " AND S.S_DATE >= ?";
     $params[] = $_GET['sDateFrom'];
     $types .= 's';
 } else if (!empty($_GET['sDateTo'])) {
-    $searchMode = true;
-    $searchConditions[] = "S.S_DATE <= ?";
+    $where .= " AND S.S_DATE <= ?";
     $params[] = $_GET['sDateTo'];
     $types .= 's';
 }
 if (!empty($_GET['dDateFrom']) && !empty($_GET['dDateTo'])) {
-    $searchMode = true;
-    $searchConditions[] = "S.D_DATE BETWEEN ? AND ?";
+    $where .= " AND S.D_DATE BETWEEN ? AND ?";
     $params[] = $_GET['dDateFrom'];
     $params[] = $_GET['dDateTo'];
     $types .= 'ss';
 } else if (!empty($_GET['dDateFrom'])) {
-    $searchMode = true;
-    $searchConditions[] = "S.D_DATE >= ?";
+    $where .= " AND S.D_DATE >= ?";
     $params[] = $_GET['dDateFrom'];
     $types .= 's';
 } else if (!empty($_GET['dDateTo'])) {
-    $searchMode = true;
-    $searchConditions[] = "S.D_DATE <= ?";
+    $where .= " AND S.D_DATE <= ?";
     $params[] = $_GET['dDateTo'];
     $types .= 's';
 }
