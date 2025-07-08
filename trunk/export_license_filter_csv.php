@@ -93,7 +93,7 @@ header('Content-Type: text/csv; charset=UTF-8');
 header('Content-Disposition: attachment; filename="filtered_license_list.csv"');
 
 $output = fopen('php://output', 'w');
-fputcsv($output, ['명세서번호', 'SN', '납품처', '유형', '담당 엔지니어', '가격', '보증기간', '시작일', '종료일', '점검', '파트너지원', '비고']);
+fputcsv($output, ['명세서번호', 'SN', '납품처', '유형', '담당 엔지니어', '가격', '보증기간', '시작일', '종료일', '점검/파트너지원', '비고']);
 
 while ($row = mysqli_fetch_assoc($result)) {
     fputcsv($output, [
@@ -106,8 +106,7 @@ while ($row = mysqli_fetch_assoc($result)) {
         $row['S_DATE'] ?? '',
         $row['D_DATE'] ?? '',
         $row['WARRANTY'] ?? '',
-        $row['INSPECTION'] ?? '',
-        $row['SUPPORT'] ?? '',
+        ($row['INSPECTION'] ?? '') . "/" . ($row['SUPPORT'] ?? ''),
         $row['REF'] ?? ''
     ]);
 }

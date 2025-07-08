@@ -45,7 +45,7 @@ if ($output === false) {
 }
 
 // CSV 헤더 라인
-fputcsv($output, ['명세서번호', 'SN', '납품처', '유형', '담당 엔지니어', '가격', '보증기간', '시작일', '종료일', '점검', '파트너지원', '비고']);
+fputcsv($output, ['명세서번호', 'SN', '납품처', '유형', '담당 엔지니어', '가격', '보증기간', '시작일', '종료일', '점검/파트너지원', '비고']);
 
 // 데이터 행 작성
 while ($row = mysqli_fetch_assoc($result)) {
@@ -59,8 +59,7 @@ while ($row = mysqli_fetch_assoc($result)) {
         $row['S_DATE'] ?? '',
         $row['D_DATE'] ?? '',
         $row['WARRANTY'] ?? '',
-        $row['INSPECTION'] ?? '',
-        $row['SUPPORT'] ?? '',
+        ($row['INSPECTION'] ?? '') . "/" . ($row['SUPPORT'] ?? ''),
         $row['REF'] ?? ''
     ]);
 }
