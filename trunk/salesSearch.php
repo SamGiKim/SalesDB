@@ -38,10 +38,7 @@ mysqli_set_charset($dbconnect, "utf8");
                 <form 
                     id="searchForm"
                     method="get"
-                    hx-get="salesMain.php?action=search"
-                    hx-trigger="submit"
-                    hx-target=".main"
-                    hx-push-url="true">
+                    action="salesMain.php">
                         <tr>
                             <td><label for="saleId">판매번호</label></td>
                             <td><input type="text" class="input" name="saleId" id="saleId">

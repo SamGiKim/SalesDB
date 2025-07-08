@@ -41,7 +41,8 @@ if ($sn) {
 }
 
 // 검색 조회
-if ($action === 'search') {
+if ($searchSaleId || $vName || $cName || $cbizName || $bizName || $deliverDate 
+    || $sDateFrom || $sDateTo || $dDateFrom || $dDateTo || $ref) {
     if ($searchSaleId) {
         $where[] = "s.SALE_ID LIKE '%" . mysqli_real_escape_string($dbconnect, $searchSaleId) . "%'";
     }
