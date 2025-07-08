@@ -148,6 +148,14 @@ if (!$result) {
         .model {margin-right: 50px;} /* 모델명과 FV 사이의 간격 조절 */
 
     </style>
+    <script>
+        function downloadFilteredCsv() {
+            const currentUrl = window.location.href;
+            const url = new URL(currentUrl);
+            const params = url.search;
+            window.location.href = 'export_device_filter_csv.php' + params;
+        }
+    </script>
 </head>
 
 <body>
@@ -164,6 +172,8 @@ if (!$result) {
             <div class="col-12 d-flex justify-content-start main-top-btn">
                 <button type="button" class="btn btn-primary insert mr-2" onclick="goToDeviceInsert()">신규</button>
                 <button type="button" class="btn btn-primary search">검색</button>
+                <button type="button" class="btn-primary csv" onclick="window.location.href='export_device_csv.php'">전체 CSV</button>
+                <button type="button" class="btn-primary csv" onclick="downloadFilteredCsv()">검색 CSV</button>
             </div>
             <div class="total-number" style="text-align:left; margin-left:2%; font-size: 1.2em; font-weight:bold;">
                 <?= $message ?><span> </span><?= $totalCount ?> 건
