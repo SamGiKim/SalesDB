@@ -85,9 +85,19 @@ function selectSales($sortBy, $receivedSN = null, $receivedSaleID = null, $recei
         $sn = mysqli_real_escape_string($dbconnect, $receivedSN);
         $sql .= " WHERE d.SN = '$sn'";
     } elseif (!empty($receivedSaleID)) {
-        $saleId = mysqli_real_escape_string($dbconnect, $receivedSaleID);
-        $sql .= " WHERE s.SALE_ID = '$saleId'";
-    } elseif (!empty($receivedOrderNo)) {
+        if (is_array($receivedSaleID)) {
+            // 배열 처리: 각 값을 escape하고 쿼리 조합
+            $escaped = array_map(function($id) use ($dbconnect) {
+                return "'" . mysqli_real_escape_string($dbconnect, $id) . "'";
+            }, $receivedSaleID);
+            $inClause = implode(',', $escaped);
+            $sql .= " WHERE s.SALE_ID IN ($inClause)";
+        } else {
+            $saleId = mysqli_real_escape_string($dbconnect, $receivedSaleID);
+            $sql .= " WHERE s.SALE_ID = '$saleId'";
+        }
+    }
+     elseif (!empty($receivedOrderNo)) {
         $orderNo = mysqli_real_escape_string($dbconnect, $receivedOrderNo);
         $sql .= " WHERE s.ORDER_NO = '$orderNo'";
     }
