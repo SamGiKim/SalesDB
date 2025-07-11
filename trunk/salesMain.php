@@ -403,6 +403,7 @@ $stmt->close();
             var url = 'deviceMain.php?SN=' + encodeURIComponent(DEVICE_SN) + '&SALE_ID=' + encodeURIComponent(SALE_ID);
             window.location.href = url;
         }
+
         function downloadFilteredCsv() {
             const currentUrl = window.location.href;
             const url = new URL(currentUrl);

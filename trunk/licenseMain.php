@@ -102,17 +102,22 @@ function get_count_from_dashboard($cmd) {
     }
 }
 
-function get_sql_queried_from_dashboard($cmd, $limit = null, $offset = null)
-{
+function get_sql_queried_from_dashboard($cmd, $limit = null, $offset = null) {
     $baseSelect = "SELECT L.SALE_ID, L.SN, L.TYPE, L.MANAGER, L.PRICE, L.S_DATE, L.D_DATE, L.REF, L.WARRANTY, 
                    L.INSPECTION, L.SUPPORT, V.NAME AS VENDOR_NAME
                    FROM LICENSE AS L
-                   JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
-                   JOIN VENDOR AS V ON S.V_ID = V.V_ID";
+                   LEFT JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
+                   LEFT JOIN VENDOR AS V ON S.V_ID = V.V_ID";
 
-    $d_date_tobe_expired = date("Y-m-d", strtotime("+30 days"));
+    $today = date("Y-m-d");
+    $d_date_tobe_expired = date("Y-m-d", strtotime("+30 days"));  // 30일 후 날짜
 
     switch ($cmd) {
+        case "000":
+            $message = "유상 서비스 계약 : ";
+            $where = "L.TYPE = '유상' AND L.D_DATE >= '$today'";
+            $order = "ORDER BY L.D_DATE ASC";
+            break;
         case "001":
             $message = "유상 보증기간 종료 예정(D-30) : ";
             $where = "L.TYPE = '유상' AND L.D_DATE BETWEEN CURDATE() AND '$d_date_tobe_expired'";
@@ -139,15 +144,14 @@ function get_sql_queried_from_dashboard($cmd, $limit = null, $offset = null)
             $order = "ORDER BY L.SALE_ID DESC";
             break;
     }
-
     $sql = "$baseSelect WHERE $where $order";
 
     if ($limit !== null && $offset !== null) {
         $sql .= " LIMIT $limit OFFSET $offset";
     }
-
     return ['sql' => $sql, 'message' => $message];
 }
+
 
 //name 값들을 DB 컬럼값으로 고쳐줘야하므로 매핑을 하고
 $fieldToDbColumnMapping = [
@@ -454,8 +458,8 @@ if (!empty($_GET['ref'])) {
 if ($searchMode) {
     $sqlCount = "SELECT COUNT(*) AS cnt
                  FROM LICENSE AS L
-                 JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
-                 JOIN VENDOR AS V ON S.V_ID = V.V_ID
+                 LEFT JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
+                 LEFT JOIN VENDOR AS V ON S.V_ID = V.V_ID
                  WHERE " . implode(' AND ', $searchConditions);
 
     $stmt = $dbconnect->prepare($sqlCount);
@@ -469,8 +473,8 @@ if ($searchMode) {
     $offset = ($page - 1) * $itemsPerPage;
     $sqlData = "SELECT L.*, V.NAME AS VENDOR_NAME
                 FROM LICENSE AS L
-                JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
-                JOIN VENDOR AS V ON S.V_ID = V.V_ID
+                LEFT JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
+                LEFT JOIN VENDOR AS V ON S.V_ID = V.V_ID
                 WHERE " . implode(' AND ', $searchConditions) .
             " LIMIT ? OFFSET ?";
     $params[] = $itemsPerPage;

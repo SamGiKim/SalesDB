@@ -53,10 +53,24 @@ function get_totalDevices(){
 }
 $totalDevices = get_totalDevices();
 
-// 2. 총 유지보수 고객 totalLicenses
-function get_totalLicenses($today, &$query_licenses = "") {
-    global $dbconnect;
-    $query_licenses = "SELECT COUNT(DISTINCT CONCAT(SALE_ID, '-', SN)) as license_count FROM LICENSE WHERE '$today' <= D_DATE ";
+// 2. 총 유지보수 고객 totalLicenses 
+// 250711 jhkim 유상조건 추가
+function get_totalLicenses($today, &$query_licenses = "", $_type = "") {
+	global $dbconnect;
+	if($_type == "유상") 
+		$query_licenses = "SELECT COUNT(DISTINCT CONCAT(L.SALE_ID, '-', SN)) as license_count 
+        FROM LICENSE L
+        LEFT JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
+        LEFT JOIN VENDOR AS V ON S.V_ID = V.V_ID
+        WHERE L.TYPE = '$_type' AND '$today' <= L.D_DATE ";
+	else 
+		$query_licenses = "SELECT COUNT(DISTINCT CONCAT(L.SALE_ID, '-', SN)) as license_count 
+        FROM LICENSE L
+        LEFT JOIN SALES AS S ON L.SALE_ID = S.SALE_ID
+        LEFT JOIN VENDOR AS V ON S.V_ID = V.V_ID
+        WHERE '$today' <= L.D_DATE ";
+// <<< 250711 hjkim -
+
     $result_licenses = mysqli_query($dbconnect, $query_licenses);
     if ($result_licenses) {
         $row_licenses = mysqli_fetch_assoc($result_licenses);
@@ -67,6 +81,10 @@ function get_totalLicenses($today, &$query_licenses = "") {
     }
     return $totalLicenses;
 }
+// >>> 250711 hjkim - 
+$_tmp = "";
+$totalLicenses_paid = get_totalLicenses($today, $_tmp, "유상");
+// <<< 250711 hjkim - 
 $totalLicenses = get_totalLicenses($today);
 
 // 3. 유상 보증기간 종료예정 리스트
@@ -232,8 +250,16 @@ list($eos, $start_date, $end_date) = get_eos($today, $eos_tobe_expired);
                         <td><?= $totalDevices ?><span>대</span></td>
                     </tr>
                     <tr>
-                        <th>진행중 유지보수</th>
-                        <td><?= $totalLicenses ?><span>건</span></td>
+                        <th>유상 서비스 계약</th>
+                        <td>
+                            <a class="dashLink" 
+                                href="licenseMain.php?cmd=000&dDateFrom=<?= date('Y-m-d') ?>&type=유상" 
+                                id="licenseLink0">
+                                <?= $totalLicenses_paid ?>
+                            </a>
+                            <span>건 (총</span> <?= $totalLicenses ?><span>건)</span>
+
+                        </td>
                     </tr>
                     <tr>
                         <th>유상 보증기간 종료 예정<span style="color:red; font-weight:100; font-size: 15px;">(D-30)</span></th>
